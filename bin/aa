@@ -7,30 +7,30 @@
 # Examples:
 #
 # Create a user.
-# ./aa --method-name user_create --method-parameters '{"username":"tester", "password":"password"}'
+# ./aa --method-name user_create --method-arguments '{"username":"tester", "password":"password"}'
 #
 # Create a user group.
-# ./aa --method-name group_create --method-parameters '{"id":"test","name":"Test","description":"The test group"}'
+# ./aa --method-name group_create --method-arguments '{"id":"test","name":"Test","description":"The test group"}'
 #
 # Add a user to a group
-# ./aa --method-name group_user_add --method-parameters '{"group_id":"test","user_id":"tester"}'
+# ./aa --method-name group_user_add --method-arguments '{"group_id":"test","user_id":"tester"}'
 #
 # Create a production
-# ./aa --method-name production_create --method-parameters '{"name":"Test"}'
-# ./aa --method-name production_create --method-parameters '{"name":"Test"}' --username admin --password admin
+# ./aa --method-name production_create --method-arguments '{"name":"Test"}'
+# ./aa --method-name production_create --method-arguments '{"name":"Test"}' --username admin --password admin
 #
 # Add an asset to a production. If there are multiple productions with the same name then the asset is added to each production
-# ./aa --method-name production_add_asset --method-parameters '{ "production_name": "Test", "media_paths": "eamedia://media/1.mov" }'
+# ./aa --method-name production_add_asset --method-arguments '{ "production_name": "Test", "media_paths": "eamedia://media/1.mov" }'
 #
 # Get the href of an export preset
-# ./aa --method-name export_preset_uri_by_name --method-parameters 'XPC'
+# ./aa --method-name export_preset_uri_by_name --method-arguments 'XPC'
 #
 # Get the production id(s) using the name of the production as the search criteria
-# ./aa --method-name production_get_id_by_name --method-parameters 'Test'
+# ./aa --method-name production_get_id_by_name --method-arguments 'Test'
 #
 # List the assets for a production. The output is currently {production_id} = [ { <ASSET INFO > }]
-# ./aa --method-name productions_assets_list --method-parameters '{ "production_id" : "f34fe2b7-863d-4599-8055-68cec1d46ed5"}'
-# ./aa --method-name productions_assets_list --method-parameters '{ "production_name" : "Test"}' --pretty-print
+# ./aa --method-name productions_assets_list --method-arguments '{ "production_id" : "f34fe2b7-863d-4599-8055-68cec1d46ed5"}'
+# ./aa --method-name productions_assets_list --method-arguments '{ "production_name" : "Test"}' --pretty-print
 #
 # List Productions. Outputs the raw return of the production list from AA
 # ./aa --method-name productions_list --pretty-print
@@ -45,10 +45,10 @@
 # ./aa --method-name users_list
 #
 # Return the raw output of the users#userByUserID call
-# ./aa --method-name users_by_user_id --method-parameters 'admin'
+# ./aa --method-name users_by_user_id --method-arguments 'admin'
 #
 # Export a production's asset to a location on a mount point
-# ./aa --method-name productions_export_asset_with_name_lookup --method-parameters '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
+# ./aa --method-name productions_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
 
 require 'optparse'
 
@@ -94,7 +94,7 @@ op.on('--password PASSWORD', 'The password to login with. This will be ignored i
       "\tdefault: #{options[:password]}") { |v| options[:password] = v }
 op.on('--force-login', 'Forces a new cookie even if cookie information is present.') { |v| options[:force_login] = v }
 op.on('--method-name METHODNAME', '') { |v| options[:method_name] = v }
-op.on('--method-parameters JSON', '') { |v| options[:method_parameters] = v }
+op.on('--method-arguments JSON', '') { |v| options[:method_arguments] = v }
 op.on('--pretty-print', '') { |v| options[:pretty_print] = v }
 op.on('--cookie-contents CONTENTS', 'Sets the cookie contents.') { |v| options[:cookie_contents] = v }
 op.on('--cookie-file-name FILENAME',
@@ -122,7 +122,7 @@ options[:cookie_contents] = File.read(options[:cookie_file_name]) if options[:co
 aa.http_cookie = cookie_contents = options[:cookie_contents] if options[:cookie_contents]
 
 begin
-  cookie_contents = aa.login(options) unless cookie_contents || options[:force_login]
+  cookie_contents = aa.login(options) unless cookie_contents && !options[:force_login]
 rescue => e
   abort "Error performing login on #{aa.http.to_s}. #{e.message}"
 end
@@ -137,12 +137,12 @@ method_name = options[:method_name]
 if method_name
   method_name = method_name.to_sym
   logger.debug { "Executing Method: #{method_name}" }
-  parameter_values = options[:method_parameters]
+  method_arguments = options[:method_arguments]
 
   send_arguments = [ method_name ]
-  if parameter_values
-    parameter_values = JSON.parse(parameter_values) if parameter_values.is_a?(String) and parameter_values.start_with?('{', '[')
-    send_arguments << parameter_values
+  if method_arguments
+    method_arguments = JSON.parse(method_arguments) if method_arguments.is_a?(String) and method_arguments.start_with?('{', '[')
+    send_arguments << method_arguments
   end
 
   response = aa.__send__(*send_arguments)
