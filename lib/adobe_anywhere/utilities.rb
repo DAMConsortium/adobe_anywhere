@@ -181,7 +181,7 @@ module AdobeAnywhere
         params[:production_id] = production_id
       end
 
-      jobs_ingest_create(params)
+      job_ingest_create(params)
     end # production_asset_add
 
     # @param [String] name
