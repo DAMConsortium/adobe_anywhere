@@ -1,0 +1,161 @@
+#!/usr/bin/env ruby
+# An executable that gives access to the methods available in the AdobeAnywhere::Utilities class
+#
+# OPTIONS FILE NAME ~/.options/aa
+# export ADOBE_ANYWHERE_HOST_ADDRESS=172.24.15.220
+#
+# Examples:
+#
+# Create a user.
+# ./aa --method-name user_create --method-parameters '{"username":"tester", "password":"password"}'
+#
+# Create a user group.
+# ./aa --method-name group_create --method-parameters '{"id":"test","name":"Test","description":"The test group"}'
+#
+# Add a user to a group
+# ./aa --method-name group_user_add --method-parameters '{"group_id":"test","user_id":"tester"}'
+#
+# Create a production
+# ./aa --method-name production_create --method-parameters '{"name":"Test"}'
+# ./aa --method-name production_create --method-parameters '{"name":"Test"}' --username admin --password admin
+#
+# Add an asset to a production. If there are multiple productions with the same name then the asset is added to each production
+# ./aa --method-name production_add_asset --method-parameters '{ "production_name": "Test", "media_paths": "eamedia://media/1.mov" }'
+#
+# Get the href of an export preset
+# ./aa --method-name export_preset_uri_by_name --method-parameters 'XPC'
+#
+# Get the production id(s) using the name of the production as the search criteria
+# ./aa --method-name production_get_id_by_name --method-parameters 'Test'
+#
+# List the assets for a production. The output is currently {production_id} = [ { <ASSET INFO > }]
+# ./aa --method-name productions_assets_list --method-parameters '{ "production_id" : "f34fe2b7-863d-4599-8055-68cec1d46ed5"}'
+# ./aa --method-name productions_assets_list --method-parameters '{ "production_name" : "Test"}' --pretty-print
+#
+# List Productions. Outputs the raw return of the production list from AA
+# ./aa --method-name productions_list --pretty-print
+#
+# List Productions. Outputs a hash keyed by production id and a value that contains the information about the production
+# ./aa --method-name productions_list_by_id --pretty-print
+#
+# List Productions. Outputs a hash keyed by production name. If the production name matches more than one production then the value is an array.
+# ./aa --method-name productions_list_by_name --pretty-print
+#
+# List Users. Outputs the raw return of hte user list from AA
+# ./aa --method-name users_list
+#
+# Return the raw output of the users#userByUserID call
+# ./aa --method-name users_by_user_id --method-parameters 'admin'
+#
+# Export a production's asset to a location on a mount point
+# ./aa --method-name productions_export_asset_with_name_lookup --method-parameters '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
+
+require 'optparse'
+
+begin
+  require 'adobe_anywhere/utilities'
+rescue LoadError
+  lib_path = File.expand_path('../../lib', __FILE__)
+  unless $:.include?(lib_path)
+    $:.unshift(lib_path)
+    #warn("Retrying to load AdobeAnywhere after adding #{lib_path} to $LOAD_PATH. The GEM may not be installed correctly.")
+    retry
+  end
+  abort('Failed to load the AdobeAnywhere gem.')
+end
+
+ENV_VAR_NAME_ADOBE_ANYWHERE_HOST_ADDRESS = 'ADOBE_ANYWHERE_HOST_ADDRESS'
+ENV_VAR_NAME_ADOBE_ANYWHERE_PORT         = 'ADOBE_ANYWHERE_PORT'
+ENV_VAR_NAME_ADOBE_ANYWHERE_USERNAME     = 'ADOBE_ANYWHERE_USERNAME'
+ENV_VAR_NAME_ADOBE_ANYWHERE_PASSWORD     = 'ADOBE_ANYWHERE_PASSWORD'
+ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE       = 'ADOBE_ANYWHERE_COOKIE'
+
+LOGGING_LEVELS = { :debug => Logger::DEBUG, :info => Logger::INFO, :warn => Logger::WARN,
+                   :error => Logger::ERROR, :fatal => Logger::FATAL }
+
+options = {
+    :host_address => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_HOST_ADDRESS] || AdobeAnywhere::DEFAULT_HOST_ADDRESS,
+    :port => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PORT] || AdobeAnywhere::DEFAULT_PORT,
+    :username => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_USERNAME] || AdobeAnywhere::DEFAULT_USERNAME,
+    :password => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PASSWORD] || AdobeAnywhere::DEFAULT_PASSWORD,
+    :cookie_contents => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE],
+    :log_to => STDERR,
+    :log_level => Logger::WARN,
+}
+
+op = OptionParser.new
+op.on('--host-address HOSTADDRESS', 'The AdobeAnywhere server address.',
+      "\tdefault: #{options[:host_address]}") { |v| options[:host_address] = v }
+op.on('--port PORT', 'The port on the AdobeAnywhere server to connect to.',
+      "\tdefault: #{options[:port]}") { |v| options[:port] = v }
+op.on('--username USERNAME', 'The username to login with. This will be ignored if cookie contents is set and the force login parameter is false.',
+      "\tdefault: #{options[:username]}") { |v| options[:username] = v }
+op.on('--password PASSWORD', 'The password to login with. This will be ignored if cookie contents is set and the force login parameter is false.',
+      "\tdefault: #{options[:password]}") { |v| options[:password] = v }
+op.on('--force-login', 'Forces a new cookie even if cookie information is present.') { |v| options[:force_login] = v }
+op.on('--method-name METHODNAME', '') { |v| options[:method_name] = v }
+op.on('--method-parameters JSON', '') { |v| options[:method_parameters] = v }
+op.on('--pretty-print', '') { |v| options[:pretty_print] = v }
+op.on('--cookie-contents CONTENTS', 'Sets the cookie contents.') { |v| options[:cookie_contents] = v }
+op.on('--cookie-file-name FILENAME',
+      'Sets the cookie contents from the contents of a file.') { |v| options[:cookie_file_name] = v }
+op.on('--set-cookie-env',
+      "Saves cookie contents to an environmental variable named #{ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE}") do |v|
+  options[:set_cookie_env_var] = v
+end
+op.on('--set-cookie-file FILENAME', 'Saves cookie contents to a file.') { |v| options[:set_cookie_file_name] = v }
+op.on('--log-to FILENAME', 'Log file location.', "\tdefault: STDERR") { |v| options[:log_to] = v }
+op.on('--log-level LEVEL', LOGGING_LEVELS.keys, "Logging level. Available Options: #{LOGGING_LEVELS.keys.map { |v| v.to_s}}",
+      "\tdefault: #{LOGGING_LEVELS.invert[options[:log_level]]}") { |v| options[:log_level] = LOGGING_LEVELS[v] }
+op.on_tail('-h', '--help', 'Show this message') { puts op; exit }
+op.load
+op.parse!
+
+#puts options; exit
+logger = Logger.new(options[:log_to])
+logger.level = options[:log_level] if options[:log_level]
+options[:logger] = logger
+
+aa = AdobeAnywhere::Utilities.new(options)
+
+options[:cookie_contents] = File.read(options[:cookie_file_name]) if options[:cookie_file_name]
+aa.http_cookie = cookie_contents = options[:cookie_contents] if options[:cookie_contents]
+
+begin
+  cookie_contents = aa.login(options) unless cookie_contents || options[:force_login]
+rescue => e
+  abort "Error performing login on #{aa.http.to_s}. #{e.message}"
+end
+
+if cookie_contents
+  #logger.debug { "Cookie Contents Set: #{cookie_contents}" }
+  ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE] = cookie_contents if options[:set_cookie_env_var]
+  File.write(options[:set_cookie_file_name], cookie_contents) if options[:set_cookie_file_name]
+end #
+
+method_name = options[:method_name]
+if method_name
+  method_name = method_name.to_sym
+  logger.debug { "Executing Method: #{method_name}" }
+  parameter_values = options[:method_parameters]
+
+  send_arguments = [ method_name ]
+  if parameter_values
+    parameter_values = JSON.parse(parameter_values) if parameter_values.is_a?(String) and parameter_values.start_with?('{', '[')
+    send_arguments << parameter_values
+  end
+
+  response = aa.__send__(*send_arguments)
+  if options[:pretty_print]
+    if response.is_a?(String)
+      puts JSON.pretty_unparse(JSON.parse(response))
+    else
+      pp response
+    end
+  else
+    response = JSON.generate(response) if response.is_a?(Hash) or response.is_a?(Array)
+    puts response
+  end
+  exit
+end
+
