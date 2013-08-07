@@ -51,7 +51,7 @@
 # ./aa --method-name productions_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
 
 require 'optparse'
-
+require 'pp'
 begin
   require 'adobe_anywhere/utilities'
 rescue LoadError
@@ -107,7 +107,7 @@ op.on('--set-cookie-file FILENAME', 'Saves cookie contents to a file.') { |v| op
 op.on('--log-to FILENAME', 'Log file location.', "\tdefault: STDERR") { |v| options[:log_to] = v }
 op.on('--log-level LEVEL', LOGGING_LEVELS.keys, "Logging level. Available Options: #{LOGGING_LEVELS.keys.map { |v| v.to_s}}",
       "\tdefault: #{LOGGING_LEVELS.invert[options[:log_level]]}") { |v| options[:log_level] = LOGGING_LEVELS[v] }
-op.on_tail('-h', '--help', 'Show this message') { puts op; exit }
+op.on_tail('-h', '--help', 'Show this message.') { puts op; exit }
 op.load
 op.parse!
 
