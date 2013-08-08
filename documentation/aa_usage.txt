@@ -1,0 +1,61 @@
+# DEFAULT OPTIONS FILE NAME ~/.options/aa
+# Example Options File Contents:
+#   --host-address=localhost
+#   --port=60138
+#   --username=admin
+#   --password=admin
+#
+# The Following Environmental Variables Can Be Used
+#   export ADOBE_ANYWHERE_HOST_ADDRESS=172.24.15.220
+#   export ADOBE_ANYWHERE_PORT=60138
+#   export ADOBE_ANYWHERE_USERNAME=admin
+#   export ADOBE_ANYWHERE_PASSWORD=admin
+#
+# Examples of Usage:
+#
+# Create a user.
+# ./aa --method-name user_create --method-arguments '{"id":"tester", "password":"password"}'
+#
+# Create a user group.
+# ./aa --method-name group_create --method-arguments '{"id":"test","name":"Test","description":"The test group"}'
+#
+# Add a user to a group
+# ./aa --method-name group_user_add --method-arguments '{"group_id":"test","user_id":"tester"}'
+#
+# Create a production
+# ./aa --method-name production_create --method-arguments '{"name":"Test"}'
+# ./aa --method-name production_create --method-arguments '{"name":"Test"}' --username admin --password admin
+#
+# Add an asset to a production. If there are multiple productions with the same name then the asset is added to each production
+# ./aa --method-name production_asset_add --method-arguments '{ "production_name": "Test", "media_paths": "eamedia://media/1.mov" }'
+#
+# Get the href of an export preset
+# ./aa --method-name export_preset_uri_by_name --method-arguments 'XPC'
+#
+# Get the production id(s) using the name of the production as the search criteria
+# ./aa --method-name production_get_id_by_name --method-arguments 'Test'
+#
+# List the assets for a production. The output is currently {production_id} = [ { <ASSET INFO > }]
+# ./aa --method-name production_asset_list --method-arguments '{ "production_id" : "f34fe2b7-863d-4599-8055-68cec1d46ed5"}'
+# ./aa --method-name production_asset_list --method-arguments '{ "production_name" : "Test"}' --pretty-print
+#
+# List Productions. Outputs the raw return of the production list from AA
+# ./aa --method-name production_list --pretty-print
+#
+# List Productions. Outputs a hash keyed by production id and a value that contains the information about the production
+# ./aa --method-name production_list_by_id --pretty-print
+#
+# List Productions. Outputs a hash keyed by production name. If the production name matches more than one production then the value is an array.
+# ./aa --method-name production_list_by_name --pretty-print
+#
+# List Users. Outputs the raw return of the user list from AA
+# ./aa --method-name user_list
+#
+# Return the raw output of the users#userByUserID call
+# ./aa --method-name user_by_user_id --method-arguments 'admin'
+#
+# Export a production's asset to a location on a mount point
+# ./aa --method-name production_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
+#
+# Create a production conversion job.
+# ./aa --method-name jobs_production_conversion_create --method-arguments '{"production_name":"Test","destination":"eamedia://media/test.xml","type":"AAF"}'
