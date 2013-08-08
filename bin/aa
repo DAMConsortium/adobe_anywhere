@@ -49,6 +49,9 @@
 #
 # Export a production's asset to a location on a mount point
 # ./aa --method-name production_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
+#
+# Create a production conversion job.
+# ./aa --method-name jobs_production_conversion_create --method-arguments '{"production_name":"Test","destination":"eamedia://media/test.xml","type":"AAF"}'
 
 require 'optparse'
 require 'pp'
