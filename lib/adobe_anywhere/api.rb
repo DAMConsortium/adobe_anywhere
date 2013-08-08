@@ -128,13 +128,13 @@ module AdobeAnywhere
     # @param [String] string
     # @return [String]
     def redact_passwords(string)
-      string.gsub!(/password((=.*)(&|$)|("\s*:\s*".*")(,|\s*|$))/) do |s|
+      string.sub!(/password((=.*)(&|$)|("\s*:\s*".*")(,|\s*|$))/) do |s|
         if s.start_with?('password=')
           _, remaining_string = s.split('&', 2)
-          password_mask       = "password=*REDACTED*#{remaining_string ? "&#{remaining_string}" : ''}"
+          password_mask       = "password=*REDACTED*#{remaining_string ? "&#{redact_passwords(remaining_string)}" : ''}"
         else
           _, remaining_string = s.split('",', 2)
-          password_mask       = %(password":"*REDACTED*#{remaining_string ? %(",#{remaining_string}) : '"'})
+          password_mask       = %(password":"*REDACTED*#{remaining_string ? %(",#{redact_passwords(remaining_string)}) : '"'})
         end
         password_mask
       end
@@ -534,11 +534,11 @@ module AdobeAnywhere
 
       params = params.dup
 
-      production_id = search_hash!(params, :production_id, :productionId, :productionid)
-      production_url = search_hash!(params, :production_url, :productionURL, :productionurl)
+      production_id = search_hash!(params, :production_id, :productionId, :productionid, :id)
+      production_url = search_hash!(params, :production_url, :productionURL, :productionurl, :url)
       production_url ||= File.join(http.to_s, "content/ea/git/productions/#{production_id}/HEAD.v1.json")
       destination_path = search_hash!(params, :destination_path, :destinationPath, :destinationpath, :destination)
-      production_converter_type = search_hash!(params, :production_converter_type, :productionConverterType, :productionconvertertype)
+      production_converter_type = search_hash!(params, :production_converter_type, :productionConverterType, :productionconvertertype, :type)
 
       job_parameters = { }
       job_parameters['productionURL'] = production_url
@@ -581,10 +581,9 @@ module AdobeAnywhere
     end # production_asset_delete
 
     # Lists the assets of a production
-    def production_assets_list(production_id)
+    def production_asset_list(production_id)
       http_get("content/ea/git/productions/#{production_id}/HEAD/assets.v1.json")
-    end # productions_assets_list
-    alias :production_asset_list :production_assets_list
+    end # production_asset_list
 
     # Deletes a production.
     # @param [Hash] params
@@ -625,7 +624,7 @@ module AdobeAnywhere
       job_parameters['destinationPath'] = destination_path
 
       params[:job_parameters] = JSON.generate(job_parameters)
-      http_job_create("content/ea/api/productions/#{production_id}/jobs/export.v1.json", params)
+      job_create("content/ea/api/productions/#{production_id}/jobs/export.v1.json", params)
       #return response['location'].first if successful?
       #false
     end # production_export_asset
