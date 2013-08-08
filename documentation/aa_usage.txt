@@ -12,6 +12,9 @@
 #   export ADOBE_ANYWHERE_PASSWORD=admin
 #
 # Examples of Usage:
+# 
+# Accessing help.
+# ./aa --help
 #
 # Create a user.
 # ./aa --method-name user_create --method-arguments '{"id":"tester", "password":"password"}'
