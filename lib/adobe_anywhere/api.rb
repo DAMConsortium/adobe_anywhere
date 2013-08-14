@@ -9,7 +9,9 @@ module AdobeAnywhere
 
     attr_accessor :logger, :log_request_body, :log_response_body, :log_pretty_print_body
 
-    attr_accessor :http, :cookie
+    attr_reader :http
+
+    attr_accessor :cookie
 
     # @param [Hash] params
     # @option params [Logger] :logger
@@ -28,6 +30,11 @@ module AdobeAnywhere
       @log_response_body = params[:log_response_body]
       @log_pretty_print_body = params[:log_pretty_print_body]
     end # initialize
+
+    def http=(new_http)
+      @to_s = nil
+      @http = new_http
+    end # http=
 
     # Formats a HTTPRequest or HTTPResponse body for log output.
     # @param [HTTPRequest|HTTPResponse] obj
@@ -54,9 +61,17 @@ module AdobeAnywhere
     # @param [HTTPRequest] request
     def process_request(request)
       request['Cookie'] = cookie if cookie
-      logger.debug { redact_passwords(%(REQUEST: #{request.method} #{to_s}#{request.path} HEADERS: #{request.to_hash.inspect} #{request.request_body_permitted? ? "BODY: #{format_body_for_log_output(request)}" : ''})) }
+      logger.debug { redact_passwords(%(REQUEST: #{request.method} #{to_s}#{request.path} HEADERS: #{request.to_hash.inspect} #{log_request_body and request.request_body_permitted? ? "BODY: #{format_body_for_log_output(request)}" : ''})) }
+
+      #TODO LOOKUP REQUEST E-TAG
+
       response = http.request(request)
-      logger.debug { %(RESPONSE: #{response.inspect} HEADERS: #{response.to_hash.inspect} #{response.respond_to?(:body) ? "BODY: #{format_body_for_log_output(response)}" : ''})}
+      logger.debug { %(RESPONSE: #{response.inspect} HEADERS: #{response.to_hash.inspect} #{log_response_body and response.respond_to?(:body) ? "BODY: #{format_body_for_log_output(response)}" : ''}) }
+
+      #TODO PROCESS ETAG RELATED RESPONSES (304 ?and 412?)
+
+      #TODO RECORD RESPONSE E-TAG
+
       response
     end # process_request
 
@@ -64,6 +79,8 @@ module AdobeAnywhere
     # @param [String] path
     # @param [Hash] headers
     def delete(path, headers)
+      http_to_s = to_s
+      path = path.sub(http_to_s) if path.start_with?(http_to_s)
       path = "/#{path}" unless path.start_with?('/')
       request = Net::HTTP::Delete.new(path, headers)
       process_request(request)
@@ -73,6 +90,8 @@ module AdobeAnywhere
     # @param [String] path
     # @param [Hash] headers
     def get(path, headers)
+      http_to_s = to_s
+      path = path.sub(http_to_s, '') if path.start_with?(http_to_s)
       path = "/#{path}" unless path.start_with?('/')
       request = Net::HTTP::Get.new(path, headers)
       process_request(request)
@@ -144,7 +163,7 @@ module AdobeAnywhere
     # Returns the connection information in a URI format.
     # @return [String]
     def to_s
-      "http#{http.use_ssl? ? 's' : ''}://#{http.address}:#{http.port}"
+      @to_s ||= "http#{http.use_ssl? ? 's' : ''}://#{http.address}:#{http.port}"
     end # to_s
 
   end # HTTPHandler
@@ -371,34 +390,21 @@ module AdobeAnywhere
       @parsed_response
     end # parsed_response
 
-    # Searches a hash for each key as both a string and a symbol, it will return the first match.
-    # If a key is found then the key/value pair will be deleted from the params to aid in making subsequent searches
-    # faster and to keep unwanted parameters from being passed to subsequent method calls.
-    #
-    # @param [Hash] hash
-    # @param [Symbol|Array<Symbol>] keys
-    # @return The value associated with the key
-    def search_hash!(hash, *keys)
-      #params = keys.last.is_a?(Hash) ? keys.pop : { }
-      #search_symbols_only = params[:search_symbols_only]
+    # @param [String] url
+    # @return [Hash]
+    def production_href_parse(url)
+      m = url.match(/(?<protocol>.*):\/\/(?<host_info>.*)\/content\/ea\/git\/productions\/(?<production_id>.*)\/(?<production_version>.*)\.v1\.json/)
+      href_properties = m ? Hash[m.names.zip(m.captures)] : { }
+      href_properties
+    end # production_href_parse
 
-      [*keys].each do |key|
-        return hash.delete(key) if hash.has_key?(key)
-        #return if search_symbols_only
-        key = key.to_s
-        return hash.delete(key) if hash.has_key?(key)
-      end
-      nil
-    end # search_hash!
+    def production_job_href_parse(url)
+      m = url.match(/(?<protocol>.*):\/\/(?<host_info>.*)\/content\/ea\/api\/productions\/(?<production_id>.*)\/jobs\/(?<job_type>.*)\/(?<job_name>.*)\.v1\.json/)
+      href_properties = m ? Hash[m.names.zip(m.captures)] : { }
+      href_properties
+    end # production_job_href_parse
 
-    # The non-destructive version of {#search_hash!}
-    #
-    # @param [Hash] hash
-    # @param [Symbol|Array<Symbol>] keys
-    # @return The value associated with the key
-    def search_hash(hash, *keys)
-      search_hash!(hash.dup, *keys)
-    end # search_hash
+    # production_job_parse
 
 
     ##################################################################################################################
@@ -434,6 +440,12 @@ module AdobeAnywhere
     def logout
       http_get('system/sling/logout?resource=/content/ea/api/discovery.v1.json')
     end # logout
+
+    # List Enclosures
+    def enclosure_list
+      http_get('content/ea/api/enclosures.v1.json')
+    end # enclosure_list
+
 
     # Creates an export preset.
     # @param [Hash] params
@@ -497,7 +509,7 @@ module AdobeAnywhere
     def job_ingest_create(params = {})
       params = params.dup
       production_id = search_hash!(params, :production_id, :productionId, :productionid)
-      return production_id.map { |cp_id| jobs_ingest_create(params.merge(:production_id => cp_id)) } if production_id.is_a?(Array)
+      return production_id.map { |cp_id| job_ingest_create(params.merge(:production_id => cp_id)) } if production_id.is_a?(Array)
 
       production_version = search_hash!(params, :production_version, :version, :commit_id, :commit, :commitid) || 'HEAD'
 
@@ -520,10 +532,44 @@ module AdobeAnywhere
     end # job_ingest_create
 
     # Lists jobs
-    def job_list
-      get('content/ea/api/jobs.v1.json')
+    # @param [String] type (nil) Known types are SUCCESSFUL, WAITING, SCHEDULED, FAILED, RUNNING, CANCELED, CANCEL
+    def job_list(type = nil)
+      path = 'content/ea/api/jobs.v1.json'
+      path << '/' << type.upcase if type
+      http_get(path)
     end # job_list
     alias :jobs_list :job_list
+
+    # List Available Job Types
+    def job_list_job_types
+      http_get('content/ea/api/jobs.type.v1.json')
+    end # job_list_job_types
+
+    # List Medialocators
+    def medialocator_list
+      http_get('content/ea/api/medialocators.v1.json')
+    end # medialocator_list
+
+    # List Monitors
+    def monitor_list
+      http_get('content/ea/api/monitors.v1.json')
+    end # monitor_list
+
+    # List Mount Point Labels
+    def mount_point_lable_list(params = {})
+      http_get('content/ea/api/mountpointlabels.v1.json')
+    end # mount_point_lable_list
+
+    # List Node Controllers
+    def node_controller_list
+      http_get('content/ea/api/nodecontrollers.v1.json')
+    end # node_controller_list
+
+    # Node Controller Status
+    def node_controller_status
+      http_get('content/ea/api/nodecontroller/status.json')
+    end # node_controller_status
+
 
     # Creates a Production Conversion Job
     # @param [Hash] params
@@ -543,7 +589,8 @@ module AdobeAnywhere
       job_parameters = { }
       job_parameters['productionURL'] = production_url
       job_parameters['productionConverterType'] = production_converter_type
-      job_parameters['destinationPath'] = destination_path
+      #job_parameters['destinationPath'] = destination_path
+      job_parameters['destination'] = destination_path
 
       params[:job_parameters] = JSON.generate(job_parameters)
       job_create("content/ea/api/productions/#{production_id}/jobs/productionconversion.v1.json", params)
@@ -558,10 +605,14 @@ module AdobeAnywhere
     # custom json properties may be added to the request and will be stored on the server with the production
     def production_create(params = {})
       params = params.dup
-      params['name'] = search_hash!(params, :name)
-      params['description'] = search_hash!(params, :description)
+      params['name'] = search_hash!(params, :name, :production_name)
+      params['description'] = search_hash!(params, :description, :production_description)
       http_post_json('content/ea/git/productions.v1.json', params)
     end # production_create
+
+    def production_get(production_id, production_version = 'HEAD')
+      http_get("content/ea/git/productions/#{production_id}/#{production_version}.v1.json")
+    end # production_get
 
     # Lists productions
     def production_list

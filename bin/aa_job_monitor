@@ -1,0 +1,15 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'pp'
+begin
+  require 'adobe_anywhere/job_monitor'
+rescue LoadError
+  lib_path = File.expand_path('../../lib', __FILE__)
+  unless $:.include?(lib_path)
+    $:.unshift(lib_path)
+    #warn("Retrying to load AdobeAnywhere after adding #{lib_path} to $LOAD_PATH. The GEM may not be installed correctly.")
+    retry
+  end
+  abort("Failed to load the AdobeAnywhere gem. #{$!}")
+end

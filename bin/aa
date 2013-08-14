@@ -4,7 +4,7 @@
 require 'optparse'
 require 'pp'
 begin
-  require 'adobe_anywhere/utilities'
+  require 'adobe_anywhere/api/utilities'
 rescue LoadError
   lib_path = File.expand_path('../../lib', __FILE__)
   unless $:.include?(lib_path)
@@ -25,13 +25,13 @@ LOGGING_LEVELS = { :debug => Logger::DEBUG, :info => Logger::INFO, :warn => Logg
                    :error => Logger::ERROR, :fatal => Logger::FATAL }
 
 options = {
-    :host_address => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_HOST_ADDRESS] || AdobeAnywhere::DEFAULT_HOST_ADDRESS,
-    :port => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PORT] || AdobeAnywhere::DEFAULT_PORT,
-    :username => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_USERNAME] || AdobeAnywhere::DEFAULT_USERNAME,
-    :password => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PASSWORD] || AdobeAnywhere::DEFAULT_PASSWORD,
-    :cookie_contents => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE],
-    :log_to => STDERR,
-    :log_level => Logger::WARN,
+  :host_address => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_HOST_ADDRESS] || AdobeAnywhere::DEFAULT_HOST_ADDRESS,
+  :port => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PORT] || AdobeAnywhere::DEFAULT_PORT,
+  :username => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_USERNAME] || AdobeAnywhere::DEFAULT_USERNAME,
+  :password => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PASSWORD] || AdobeAnywhere::DEFAULT_PASSWORD,
+  :cookie_contents => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE],
+  :log_to => STDERR,
+  :log_level => Logger::WARN,
 }
 
 options_file_name = nil
@@ -73,7 +73,7 @@ logger = Logger.new(options[:log_to])
 logger.level = options[:log_level] if options[:log_level]
 options[:logger] = logger
 
-aa = AdobeAnywhere::Utilities.new(options)
+aa = AdobeAnywhere::API::Utilities.new(options)
 
 options[:cookie_contents] = File.read(options[:cookie_file_name]) if options[:cookie_file_name]
 aa.http_cookie = cookie_contents = options[:cookie_contents] if options[:cookie_contents]

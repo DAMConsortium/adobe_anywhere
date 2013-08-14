@@ -17,6 +17,7 @@ end
 require 'logger'
 
 require 'adobe_anywhere/version'
+require 'adobe_anywhere/utilities'
 
 module AdobeAnywhere
 
