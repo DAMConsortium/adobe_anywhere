@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 # An executable that gives access to the methods available in the AdobeAnywhere::Utilities class
-
+require 'hpricot'
 require 'optparse'
 require 'pp'
 begin
@@ -33,8 +33,7 @@ options = {
   :log_to => STDERR,
   :log_level => Logger::WARN,
 }
-
-options_file_name = nil
+options_file_path = nil
 
 op = OptionParser.new
 op.on('--host-address HOSTADDRESS', 'The AdobeAnywhere server address.',
@@ -60,59 +59,103 @@ op.on('--set-cookie-file FILENAME', 'Saves cookie contents to a file.') { |v| op
 op.on('--log-to FILENAME', 'Log file location.', "\tdefault: STDERR") { |v| options[:log_to] = v }
 op.on('--log-level LEVEL', LOGGING_LEVELS.keys, "Logging level. Available Options: #{LOGGING_LEVELS.keys.map { |v| v.to_s}}",
       "\tdefault: #{LOGGING_LEVELS.invert[options[:log_level]]}") { |v| options[:log_level] = LOGGING_LEVELS[v] }
-op.on('--[no-]options-file [FILENAME]' ) { |v| options[:options_file_name] = v}
+op.on('--[no-]options-file [FILENAME]' ) { |v| options[:options_file_path] = v}
 op.on_tail('-h', '--help', 'Show this message.') { puts op; exit }
 op.load
 op.parse!
 
-options_file_name = options[:options_file_name]
-op.load(options_file_name) if options_file_name
+options_file_path = options[:options_file_path]
+op.load(options_file_path) if options_file_path
+
 
 #puts options; exit
-logger = Logger.new(options[:log_to])
-logger.level = options[:log_level] if options[:log_level]
-options[:logger] = logger
 
-aa = AdobeAnywhere::API::Utilities.new(options)
+module AdobeAnywhere
 
-options[:cookie_contents] = File.read(options[:cookie_file_name]) if options[:cookie_file_name]
-aa.http_cookie = cookie_contents = options[:cookie_contents] if options[:cookie_contents]
+  class CLI
 
-begin
-  cookie_contents = aa.login(options) unless cookie_contents && !options[:force_login]
-rescue => e
-  abort "Error performing login on #{aa.http.to_s}. #{e.message}"
-end
+    attr_accessor :logger
+    attr_accessor :aa
 
-if cookie_contents
-  #logger.debug { "Cookie Contents Set: #{cookie_contents}" }
-  ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE] = cookie_contents if options[:set_cookie_env_var]
-  File.write(options[:set_cookie_file_name], cookie_contents) if options[:set_cookie_file_name]
-end #
+    def initialize(params = {})
+      @logger = Logger.new(params[:log_to])
+      logger.level = params[:log_level] if params[:log_level]
+      params[:logger] = logger
 
-method_name = options[:method_name]
-if method_name
-  method_name = method_name.to_sym
-  logger.debug { "Executing Method: #{method_name}" }
-  method_arguments = options[:method_arguments]
+      @aa = AdobeAnywhere::API::Utilities.new(params)
 
-  send_arguments = [ method_name ]
-  if method_arguments
-    method_arguments = JSON.parse(method_arguments) if method_arguments.is_a?(String) and method_arguments.start_with?('{', '[')
-    send_arguments << method_arguments
-  end
+      params[:cookie_contents] = File.read(params[:cookie_file_name]) if params[:cookie_file_name]
+      aa.http_cookie = cookie_contents = params[:cookie_contents] if params[:cookie_contents]
+      aa.http.log_request_body = true
+      aa.http.log_response_body = true
+      aa.http.log_pretty_print_body = true
 
-  response = aa.__send__(*send_arguments)
-  if options[:pretty_print]
-    if response.is_a?(String)
-      puts JSON.pretty_unparse(JSON.parse(response))
-    else
-      pp response
-    end
-  else
-    response = JSON.generate(response) if response.is_a?(Hash) or response.is_a?(Array)
-    puts response
-  end
-  exit
-end
+      begin
+        cookie_contents = aa.login(params) unless cookie_contents && !params[:force_login]
+      rescue => e
+        abort "Error performing login on #{aa.http.to_s}. #{e.message}"
+      end
 
+      if cookie_contents
+        #logger.debug { "Cookie Contents Set: #{cookie_contents}" }
+        ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE] = cookie_contents if params[:set_cookie_env_var]
+        File.write(params[:set_cookie_file_name], cookie_contents) if params[:set_cookie_file_name]
+      end #
+
+      method_name = params[:method_name]
+      send(method_name, params[:method_arguments], :pretty_print => params[:pretty_print]) if method_name
+
+    end # initialize
+
+    def send(method_name, method_arguments, params = {})
+      method_name = method_name.to_sym
+      logger.debug { "Executing Method: #{method_name}" }
+
+      send_arguments = [ method_name ]
+
+      if method_arguments
+        method_arguments = JSON.parse(method_arguments) if method_arguments.is_a?(String) and method_arguments.start_with?('{', '[')
+        send_arguments << method_arguments
+      end
+
+      response = aa.__send__(*send_arguments)
+
+      if aa.response.code.to_i.between?(500,599)
+        puts aa.parsed_response
+        exit
+      end
+
+      if self.respond_to?(method_name)
+        response = self.__send__(method_name)
+      end
+
+      if params[:pretty_print]
+        if response.is_a?(String) and response.lstrip.start_with?('{', '[')
+          puts JSON.pretty_unparse(JSON.parse(response))
+        else
+          pp response
+        end
+      else
+        response = JSON.generate(response) if response.is_a?(Hash) or response.is_a?(Array)
+        puts response
+      end
+      exit
+    end # send
+
+    def group_create(params = {})
+      doc = Hpricot(aa.response.body)
+      doc_title = doc.at('title').inner_html.split('/').last
+      doc_title
+    end # group_create
+
+    def user_create(params = { })
+      doc = Hpricot(aa.response.body)
+      doc_title = doc.at('title').inner_html.split('/').last
+      doc_title
+    end # user_create
+
+  end # CLI
+
+end # AdobeAnywhere
+
+AdobeAnywhere::CLI.new(options)
