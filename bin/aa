@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# An executable that gives access to the methods available in the AdobeAnywhere::Utilities class
+# An executable that gives access to the methods available in the AdobeAnywhere::API::Utilities class
 require 'hpricot'
 require 'optparse'
 require 'pp'
