@@ -42,6 +42,9 @@
 # ./aa --method-name production_asset_list --method-arguments '{ "production_id" : "f34fe2b7-863d-4599-8055-68cec1d46ed5"}'
 # ./aa --method-name production_asset_list --method-arguments '{ "production_name" : "Test"}' --pretty-print
 #
+# Delete a Production.
+# ./aa --method-name production_delete --method-arguments '{ "production_name" : "Callback Tester" }'
+#
 # List Productions. Outputs the raw return of the production list from AA
 # ./aa --method-name production_list --pretty-print
 #
