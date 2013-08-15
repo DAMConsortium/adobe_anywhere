@@ -107,6 +107,37 @@ module AdobeAnywhere
 
     end # initialize
 
+    class ResponseHandler
+
+      class << self
+
+        attr_accessor :aa
+
+        def group_create(*args)
+          doc = Hpricot(aa.response.body)
+          doc_title = doc.at('title').inner_html.split('/').last
+          doc_title
+        end # group_create
+
+        def user_create(*args)
+          doc = Hpricot(aa.response.body)
+          doc_title = doc.at('title').inner_html.split('/').last
+          doc_title
+        end # user_create
+
+        def production_create(params = {})
+          parsed_response = aa.parsed_response
+          links = parsed_response['links']
+          link_self_index = links.index { |link| link['rel'].downcase == 'self' }
+          link_self_href = links[link_self_index]['href']
+          [ parsed_response['ea:productionId'], link_self_href ]
+        end # production_create
+
+      end # << self
+
+    end # ResponseHandler
+
+
     def send(method_name, method_arguments, params = {})
       method_name = method_name.to_sym
       logger.debug { "Executing Method: #{method_name}" }
@@ -125,8 +156,9 @@ module AdobeAnywhere
         exit
       end
 
-      if self.respond_to?(method_name)
-        response = self.__send__(method_name)
+      if ResponseHandler.respond_to?(method_name)
+        ResponseHandler.aa = aa
+        response = ResponseHandler.__send__(*send_arguments)
       end
 
       if params[:pretty_print]
@@ -141,18 +173,6 @@ module AdobeAnywhere
       end
       exit
     end # send
-
-    def group_create(params = {})
-      doc = Hpricot(aa.response.body)
-      doc_title = doc.at('title').inner_html.split('/').last
-      doc_title
-    end # group_create
-
-    def user_create(params = { })
-      doc = Hpricot(aa.response.body)
-      doc_title = doc.at('title').inner_html.split('/').last
-      doc_title
-    end # user_create
 
   end # CLI
 
