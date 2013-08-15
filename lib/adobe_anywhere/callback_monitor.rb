@@ -32,6 +32,8 @@ module AdobeAnywhere
 
     attr_accessor :db
 
+    attr_accessor :initial_options
+
     attr_accessor :path_substitutions
 
     attr_accessor :mig_executable_path
@@ -49,20 +51,31 @@ module AdobeAnywhere
     # @option params [String] :log_to
     # @option params [Integer] :log_level
     def initialize(params = {})
+      @initial_options = self.class.initial_options
+      params = initial_options.merge(params)
+
       @logger ||= params[:logger] || Logger.new(params[:log_to] || STDOUT)
       logger.level = params[:log_level] if params[:log_level]
 
       logger.debug { 'Initializing Callback Monitor.' }
+      load_configuration_from_file(params[:config_file_path])
+      logger.debug { "Tasks: #{@tasks}" }
+      logger.debug { "Path Subtitutions: #{@path_substitutions}" }
       database_params = params || { }
 
       initialize_database(database_params)
 
-      @tasks = self.class.tasks
-      @path_substitutions = self.class.path_substitutions || { }
+      #@tasks = self.class.tasks
+      #@path_substitutions = self.class.path_substitutions || { }
       @mig_executable_path = self.class.mig_executable_path
       @aa = self.class.aa
       super
     end # initialize
+
+    def load_configuration_from_file(file_path)
+      eval(File.read(file_path))
+    end # load_configuration_from_file
+
 
     def initialize_database(params = { })
       @db = JobDatabase.new(params.dup)
