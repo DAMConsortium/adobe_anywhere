@@ -506,6 +506,7 @@ module AdobeAnywhere
     # @option params [String] :destination
     # @option params [String, Array<String>] :media_paths
     # @option params [String] :comment
+    # @return [String, False] Returns the name of the job or false if a job was not created.
     def job_ingest_create(params = {})
       params = params.dup
       production_id = search_hash!(params, :production_id, :productionId, :productionid)
@@ -527,7 +528,7 @@ module AdobeAnywhere
 
       params[:job_parameters] = JSON.generate(job_parameters)
       job_create("content/ea/api/productions/#{production_id}/jobs/ingest.v1.json", params)
-      return true if success?
+      return parsed_response['jcr:name'] if success?
       false
     end # job_ingest_create
 
