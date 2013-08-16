@@ -113,6 +113,8 @@ module AdobeAnywhere
 
         attr_accessor :aa
 
+        attr_accessor :response
+
         def group_create(*args)
           doc = Hpricot(aa.response.body)
           doc_title = doc.at('title').inner_html.split('/').last
@@ -132,6 +134,20 @@ module AdobeAnywhere
           link_self_href = links[link_self_index]['href']
           [ parsed_response['ea:productionId'], link_self_href ]
         end # production_create
+
+        def production_list_by_name(params = {})
+          production_array = [ ]
+          response.each do |production_name, productions|
+            productions = [ productions ] unless productions.is_a?(Array)
+            productions.each do |production|
+              production_id   = production['ea:productionId']
+              production_name = production_name
+              production_href = production['links'].first['href']
+              production_array << [production_name, production_id, production_href]
+            end
+          end
+          production_array
+        end # production_list_by_name
 
       end # << self
 
@@ -158,6 +174,7 @@ module AdobeAnywhere
 
       if ResponseHandler.respond_to?(method_name)
         ResponseHandler.aa = aa
+        ResponseHandler.response = response
         response = ResponseHandler.__send__(*send_arguments)
       end
 
