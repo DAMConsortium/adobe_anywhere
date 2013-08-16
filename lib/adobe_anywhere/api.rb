@@ -595,7 +595,7 @@ module AdobeAnywhere
 
       params[:job_parameters] = JSON.generate(job_parameters)
       job_create("content/ea/api/productions/#{production_id}/jobs/productionconversion.v1.json", params)
-      return true if success?
+      return parsed_response['jcr:name'] if success?
       false
     end # job_production_conversion_create
 
