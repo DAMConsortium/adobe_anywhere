@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 # An executable that gives access to the methods available in the AdobeAnywhere::API::Utilities class
-require 'hpricot'
 require 'optparse'
 require 'pp'
 begin
@@ -116,14 +115,14 @@ module AdobeAnywhere
         attr_accessor :response
 
         def group_create(*args)
-          doc = Hpricot(aa.response.body)
-          doc_title = doc.at('title').inner_html.split('/').last
+          m = aa.response.body.match(/<title>(?<title>.*)<\/title>/)
+          doc_title = m['title']
           doc_title
         end # group_create
 
         def user_create(*args)
-          doc = Hpricot(aa.response.body)
-          doc_title = doc.at('title').inner_html.split('/').last
+          m = aa.response.body.match(/<title>(?<title>.*)<\/title>/)
+          doc_title = m['title']
           doc_title
         end # user_create
 
@@ -135,19 +134,16 @@ module AdobeAnywhere
           [ parsed_response['ea:productionId'], link_self_href ]
         end # production_create
 
-        def production_list_by_name(params = {})
+        def production_list(params = {})
           production_array = [ ]
-          response.each do |production_name, productions|
-            productions = [ productions ] unless productions.is_a?(Array)
-            productions.each do |production|
-              production_id   = production['ea:productionId']
-              production_name = production_name
-              production_href = production['links'].first['href']
-              production_array << [production_name, production_id, production_href]
-            end
+          response.each do |production|
+            production_name = production['properties']['name']
+            production_id   = production['ea:productionId']
+            production_href = production['links'].first['href']
+            production_array << [production_name, production_id, production_href]
           end
           production_array
-        end # production_list_by_name
+        end # production_list
 
       end # << self
 
