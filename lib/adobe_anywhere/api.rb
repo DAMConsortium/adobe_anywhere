@@ -393,18 +393,31 @@ module AdobeAnywhere
     # @param [String] url
     # @return [Hash]
     def production_href_parse(url)
-      m = url.match(/(?<protocol>.*):\/\/(?<host_info>.*)\/content\/ea\/git\/productions\/(?<production_id>.*)\/(?<production_version>.*)\.v1\.json/)
-      href_properties = m ? Hash[m.names.zip(m.captures)] : { }
+      #m = url.match(/(?<protocol>.*):\/\/(?<host_info>.*)\/content\/ea\/git\/productions\/(?<production_id>.*)\/(?<production_version>.*)\.v1\.json/)
+      #href_properties = m ? Hash[m.names.zip(m.captures)] : { }
+      #href_properties
+      m = url.match(/(.*):\/\/(.*)\/content\/ea\/git\/productions\/(.*)\/(.*)\.v1\.json/)
+      href_properties = m ? {
+        'host_info' => $1,
+        'production_id' => $2,
+        'production_version' => $3
+      } : { }
       href_properties
     end # production_href_parse
 
     def production_job_href_parse(url)
-      m = url.match(/(?<protocol>.*):\/\/(?<host_info>.*)\/content\/ea\/api\/productions\/(?<production_id>.*)\/jobs\/(?<job_type>.*)\/(?<job_name>.*)\.v1\.json/)
-      href_properties = m ? Hash[m.names.zip(m.captures)] : { }
+      #m = url.match(/(?<protocol>.*):\/\/(?<host_info>.*)\/content\/ea\/api\/productions\/(?<production_id>.*)\/jobs\/(?<job_type>.*)\/(?<job_name>.*)\.v1\.json/)
+      #href_properties = m ? Hash[m.names.zip(m.captures)] : { }
+      #href_properties
+      m = url.match(/(.*):\/\/(.*)\/content\/ea\/api\/productions\/(.*)\/jobs\/(.*)\/(.*)\.v1\.json/)
+      href_properties = m ? {
+        'host_info' => $1,
+        'production_id' => $2,
+        'job_type' => $3,
+        'job_name' => $4,
+      } : { }
       href_properties
     end # production_job_href_parse
-
-    # production_job_parse
 
 
     ##################################################################################################################
