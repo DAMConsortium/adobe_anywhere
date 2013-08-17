@@ -115,15 +115,13 @@ module AdobeAnywhere
         attr_accessor :response
 
         def group_create(*args)
-          m = aa.response.body.match(/<title>(?<title>.*)<\/title>/)
-          doc_title = m['title']
-          doc_title
+          m = aa.response.body.match(/<title>(.*)<\/title>/)
+          $1
         end # group_create
 
         def user_create(*args)
-          m = aa.response.body.match(/<title>(?<title>.*)<\/title>/)
-          doc_title = m['title']
-          doc_title
+          m = aa.response.body.match(/<title>(.*)<\/title>/)
+          $1
         end # user_create
 
         def production_create(params = {})
