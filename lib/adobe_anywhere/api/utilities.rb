@@ -112,7 +112,7 @@ module AdobeAnywhere
         end
 
         super(params)
-        return parsed_response['jcr:name'] if aa.success?
+        return parsed_response['jcr:name'] if success?
         false
       end # job_production_conversion_create
 
@@ -284,7 +284,7 @@ module AdobeAnywhere
         end
 
         production_export_asset(params)
-        return parsed_response['jcr:name'] if aa.success?
+        return parsed_response['jcr:name'] if success?
         false
       end # production_export_asset_with_name_lookup
       alias :productions_export_asset_with_name_lookup :production_export_asset_with_name_lookup
