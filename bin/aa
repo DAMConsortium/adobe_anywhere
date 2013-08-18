@@ -32,8 +32,6 @@ options = {
   :log_to => STDERR,
   :log_level => Logger::WARN,
 }
-options_file_path = nil
-
 op = OptionParser.new
 op.on('--host-address HOSTADDRESS', 'The AdobeAnywhere server address.',
       "\tdefault: #{options[:host_address]}") { |v| options[:host_address] = v }
@@ -60,12 +58,11 @@ op.on('--log-level LEVEL', LOGGING_LEVELS.keys, "Logging level. Available Option
       "\tdefault: #{LOGGING_LEVELS.invert[options[:log_level]]}") { |v| options[:log_level] = LOGGING_LEVELS[v] }
 op.on('--[no-]options-file [FILENAME]' ) { |v| options[:options_file_path] = v}
 op.on_tail('-h', '--help', 'Show this message.') { puts op; exit }
-op.load
-op.parse!
+op.parse!(ARGV.dup)
 
 options_file_path = options[:options_file_path]
-op.load(options_file_path) if options_file_path
-
+# Make sure that options from the command line override those from the options file
+op.parse!(ARGV.dup) if op.load(options_file_path)
 
 #puts options; exit
 
@@ -134,7 +131,8 @@ module AdobeAnywhere
 
         def production_list(params = {})
           production_array = [ ]
-          response.each do |production|
+          productions = aa.parsed_response['productions']
+          productions.each do |production|
             production_name = production['properties']['name']
             production_id   = production['ea:productionId']
             production_href = production['links'].first['href']
