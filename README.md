@@ -100,10 +100,10 @@ Usage: aa [options]
     ./aa --method-name user_by_user_id --method-arguments 'admin'
 
 ##### Export a production's asset to a location on a mount point
-    ./aa --method-name production_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
+    ./aa --method-name production_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov", "update_job_callback_uri":"http://10.1.1.1:4567" }'
 
 ##### Create a production conversion job.
-    ./aa --method-name job_production_conversion_create --method-arguments '{"production_name":"Test","destination":"eamedia://media/test.xml","type":"AAF"}'
+    ./aa --method-name job_production_conversion_create --method-arguments '{"production_name":"Test","destination":"eamedia://media/test.xml","type":"AAF", "update_job_callback_uri":"http://10.1.1.1:4567"}'
 
 #### Available Methods:
   * enclosure_list []
@@ -193,7 +193,7 @@ database.
     aa_callback_consumer status
     aa_callback_consumer stop
 
-    aa_callback_consumer start -- --adobe-anywhere-host-address [Hostname or IP Address Of Adobe Anwhere Collboration HUB]
+    aa_callback_consumer start -- --aa-host-address [Hostname or IP Address Of Adobe Anwhere Collboration HUB]
 
 Usage: aa_callback_consumer [options]
 
@@ -206,6 +206,8 @@ Usage: aa_callback_consumer [options]
                                     No information will be gathered on an asset if this is not specified.
     --binding BINDING               The address to bind the callback server to.
                                         default: 0.0.0.0
+    --port PORT                     The port that the callback server should listen on.
+                                     	default: 4567                                        
     --log-to FILEPATH               The location to log to.
                                         default: STDERR
     --log-level LEVEL               Logging level. Available Options: debug, info, warn, error, fatal
