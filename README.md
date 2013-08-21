@@ -178,7 +178,7 @@ database.
     aa_callback_consumer status
     aa_callback_consumer stop
 
-    aa_callback_consumer start -- --adobe-anywhere-host-address 10.42..1.109
+    aa_callback_consumer start -- --adobe-anywhere-host-address [Hostname or IP Address Of Adobe Anwhere Collboration HUB]
 
 Usage: aa_callback_consumer [options]
 
