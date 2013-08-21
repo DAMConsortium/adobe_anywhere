@@ -176,13 +176,13 @@ parameters at http://[AdobeAnywhereHostname/IP Address]:60138/apps/ea/content/ui
 or by callbacks that are generated when issuing the following aa executable commands
 
 ##### Add an asset to a production. If there are multiple productions with the same name then the asset is added to each production
-./aa --method-name production_asset_add --method-arguments '{ "production_name": "Test", "media_paths": "eamedia://media/1.mov" }'
+    ./aa --method-name production_asset_add --method-arguments '{ "production_name": "Test", "media_paths": "eamedia://media/1.mov", , "update_job_callback_uri":"http://10.1.1.1:4567" }'
 
 ##### Export a production's asset to a location on a mount point
-    ./aa --method-name production_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov"}'
+    ./aa --method-name production_export_asset_with_name_lookup --method-arguments '{"production_name":"Test", "exporter_preset_name":"XPC", "asset_id":"07db277c-3eb5-4319-af45-2bca9e77c0b3", "destination_path":"eamedia://export/test/1.mov", "update_job_callback_uri":"http://10.1.1.1:4567" }'
 
 ##### Create a production conversion job.
-    ./aa --method-name job_production_conversion_create --method-arguments '{"production_name":"Test","destination":"eamedia://media/test.xml","type":"AAF"}'
+    ./aa --method-name job_production_conversion_create --method-arguments '{"production_name":"Test","destination":"eamedia://media/test.xml","type":"AAF", "update_job_callback_uri":"http://10.1.1.1:4567"}'
 
 
 . The callbacks will be recorded within a job record created in it's
