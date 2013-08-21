@@ -26,13 +26,15 @@ module AdobeAnywhere
 
     attr_accessor :logger
 
-    attr_accessor :tasks
-
     attr_accessor :aa
 
     attr_accessor :db
 
     attr_accessor :initial_options
+
+    ######################################################
+
+    attr_accessor :tasks
 
     attr_accessor :path_substitutions
 
@@ -67,15 +69,10 @@ module AdobeAnywhere
 
       #@tasks = self.class.tasks
       #@path_substitutions = self.class.path_substitutions || { }
-      @mig_executable_path = self.class.mig_executable_path
-      @aa = self.class.aa
+      @mig_executable_path = params[:mig_executable_path]
+      @aa = params[:aa]
       super
     end # initialize
-
-    def load_configuration_from_file(file_path)
-      eval(File.read(file_path))
-    end # load_configuration_from_file
-
 
     def initialize_database(params = { })
       @db = JobDatabase.new(params.dup)
@@ -153,12 +150,20 @@ module AdobeAnywhere
       unless update_job_callback_uri
         before_save_job_type_callback_uri = job['ea:beforeSaveJobTypeCallbackURI']
         logger.debug { "Setting updateJobCallbackURI. #{before_save_job_type_callback_uri}" }
-        job['ea:updateJobCallbackURI'] = job['ea:callbackHref'] = before_save_job_type_callback_uri if before_save_job_type_callback_uri
+        if before_save_job_type_callback_uri
+          job['ea:updateJobCallbackURI'] = job['ea:callbackHref'] = before_save_job_type_callback_uri
+        end
       end
       job_json = JSON.generate(job)
       logger.debug { "RESPONSE BODY: #{job_json}" }
       job_json
     end # process_callback_type_job_save
+
+    ####################################################################################################################
+
+    def load_configuration_from_file(file_path)
+      eval(File.read(file_path))
+    end # load_configuration_from_file
 
     def process_job(job)
       @job = job
@@ -199,6 +204,7 @@ module AdobeAnywhere
           asset_media_info = response[:success] ? JSON.parse(response[:stdout]) : { }
           asset_media_info
         end
+
         #asset_urls = job['ea:metadata']['ea:retries'][0]['ea:result']['assetURLs']
         #job_metadata = job['ea:metadata'] || { }
         #job_retries = job_metadata['ea:retries'] || [ ]
