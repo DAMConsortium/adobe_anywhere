@@ -398,9 +398,10 @@ module AdobeAnywhere
       #href_properties
       m = url.match(/(.*):\/\/(.*)\/content\/ea\/git\/productions\/(.*)\/(.*)\.v1\.json/)
       href_properties = m ? {
-        'host_info' => $1,
-        'production_id' => $2,
-        'production_version' => $3
+        'protocol' => $1,
+        'host_info' => $2,
+        'production_id' => $3,
+        'production_version' => $4
       } : { }
       href_properties
     end # production_href_parse
@@ -411,10 +412,11 @@ module AdobeAnywhere
       #href_properties
       m = url.match(/(.*):\/\/(.*)\/content\/ea\/api\/productions\/(.*)\/jobs\/(.*)\/(.*)\.v1\.json/)
       href_properties = m ? {
-        'host_info' => $1,
-        'production_id' => $2,
-        'job_type' => $3,
-        'job_name' => $4,
+        'protocol' => $1,
+        'host_info' => $2,
+        'production_id' => $3,
+        'job_type' => $4,
+        'job_name' => $5,
       } : { }
       href_properties
     end # production_job_href_parse
