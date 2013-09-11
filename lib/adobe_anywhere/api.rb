@@ -214,6 +214,22 @@ module AdobeAnywhere
 
     end # HTMLResponseParser
 
+    @@default_options =  {
+      :host_address => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_HOST_ADDRESS] || AdobeAnywhere::DEFAULT_HOST_ADDRESS,
+      :port => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PORT] || AdobeAnywhere::DEFAULT_PORT,
+      :username => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_USERNAME] || AdobeAnywhere::DEFAULT_USERNAME,
+      :password => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_PASSWORD] || AdobeAnywhere::DEFAULT_PASSWORD,
+      :cookie_contents => ENV[ENV_VAR_NAME_ADOBE_ANYWHERE_COOKIE],
+    }
+
+    def self.default_options
+      @@default_options
+    end # self.default_options
+
+    def default_options
+      @@default_options
+    end # default_options
+
     # @param [Hash] params
     # @option params [Logger] :logger
     # @option params [String] :log_to
@@ -224,6 +240,8 @@ module AdobeAnywhere
       @logger.level = params[:log_level] if params[:log_level]
 
       @parse_response = params[:parse_response]
+
+      params = default_options.merge(params)
 
       initialize_http_handler(params)
     end # initialize
@@ -572,9 +590,9 @@ module AdobeAnywhere
     end # monitor_list
 
     # List Mount Point Labels
-    def mount_point_lable_list(params = {})
+    def mount_point_label_list(params = {})
       http_get('content/ea/api/mountpointlabels.v1.json')
-    end # mount_point_lable_list
+    end # mount_point_label_list
 
     # List Node Controllers
     def node_controller_list
