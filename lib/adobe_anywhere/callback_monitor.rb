@@ -62,7 +62,7 @@ module AdobeAnywhere
       logger.debug { 'Initializing Callback Monitor.' }
       load_configuration_from_file(params[:config_file_path])
       logger.debug { "Tasks: #{@tasks}" }
-      logger.debug { "Path Subtitutions: #{@path_substitutions}" }
+      logger.debug { "Path Substitutions: #{@path_substitutions}" }
       database_params = params || { }
 
       initialize_database(database_params)
