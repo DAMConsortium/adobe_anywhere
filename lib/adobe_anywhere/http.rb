@@ -4,9 +4,8 @@ module AdobeAnywhere
 
   class HTTP < Sinatra::Base
 
-    def self.new(args = { })
+    def self.init(args = { })
       args.each { |k,v| set(k, v) }
-      super
     end # new
 
     # Will try to convert a body to parameters and merge them into the params hash

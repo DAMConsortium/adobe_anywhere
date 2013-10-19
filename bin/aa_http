@@ -28,7 +28,9 @@ add_common_options
 op.parse_common
 
 begin
-  AdobeAnywhere::HTTP.new(options)
+  app = AdobeAnywhere::HTTP
+  app.init(options)
+  app.run!
 rescue ArgumentError => e
   abort(e.message)
 end
