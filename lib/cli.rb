@@ -46,7 +46,6 @@ module CLI
     alias :add_required_arguments :add_required_argument
 
     def missing_required_arguments
-      puts "Options #{options}"
       required_arguments.dup.delete_if { |a| options.has_key?(a.is_a?(Hash) ? a.keys.first : a) }
     end
 
