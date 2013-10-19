@@ -7,14 +7,17 @@ module AdobeAnywhere
     enable :logging
     disable :protection
 
+    # ROUTES BEGIN
+    post('/api') { handle_request_api }
+    # ROUTES END
+
     def self.init(args = { })
       args.each { |k,v| set(k, v) }
-
       def logger; settings.logger end if settings.logger
     end # new
 
     def format_response(response, args = { })
-      supported_types = [ 'application/json', 'application/xml', 'text/xml' ]
+      supported_types = [ 'application/json', 'application/xml', 'text/xml', 'text/html' ]
       case request.preferred_type(supported_types)
         when 'application/json'
           content_type :json
@@ -22,6 +25,9 @@ module AdobeAnywhere
         #when 'application/xml', 'text/xml'
         #  content_type :xml
         #  _response = XmlSimple.xml_out(response, { :root_name => 'response' })
+        when 'text/html'
+          content_type :html
+          _response = PP.pp(response, '').sub("\n", '<br/>')
         else
           content_type :json
           _response = response.is_a?(Hash) || response.is_a?(Array) ? JSON.generate(response) : response
@@ -53,8 +59,10 @@ module AdobeAnywhere
       indifferent_hash.merge(_params)
     end # merge_params_from_body
 
-    post '/api' do
-      _params = params.dup
+
+
+    def handle_request_api(_params = params)
+      _params = _params.dup
       _params = merge_params_from_body(_params)
 
       aa_args = { :logger => settings.logger }
@@ -68,7 +76,8 @@ module AdobeAnywhere
         aa.login
       rescue => e
         logger.warn { "Exception While Logging into Anywhere. #{e.message}\nBacktrace:\n#{e.backtrace}" }
-        return format_response({ :exception => { :message => e.message, :backtrace => e.backtrace } })
+        _response = format_response({ :exception => { :message => e.message, :backtrace => e.backtrace } })
+        return _response
       end
 
       method_name = search_hash!(_params, :method_name, :method, :command, :procedure)
