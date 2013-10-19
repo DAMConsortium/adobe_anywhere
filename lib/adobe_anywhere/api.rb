@@ -550,7 +550,7 @@ module AdobeAnywhere
       destination = search_hash!(params, :destination)
       destination ||= "#{http.to_s}/content/ea/git/productions/#{production_id}/#{production_version}.v1.json"
 
-      media_paths = search_hash!(params, :media_paths, :mediaPaths)
+      media_paths = search_hash!(params, :media_paths, :media_path, :mediaPaths)
       comment = search_hash!(params, :comment)
 
       job_parameters = { }
