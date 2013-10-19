@@ -124,13 +124,13 @@ module AdobeAnywhere
       def production_asset_add(params = {})
         params = params.dup
         production_name = search_hash!(params, :production_name, :productionname)
+        production_id = search_hash!(params, :production_id, :productionId, :productionid)
 
         if production_name
-          production_id = search_hash!(params, :production_id, :productionId, :productionid)
           production_id = [*production_id]
           production_id += production_get_id_by_name(production_name)
-          params[:production_id] = production_id
         end
+        params[:production_id] = production_id
 
         job_ingest_create(params)
       end # production_asset_add
@@ -201,6 +201,7 @@ module AdobeAnywhere
       # @param [String] name
       # @param [Hash] params
       # @option params [Boolean] :case_sensitive
+      # @return [Array] The array will be empty if nothing was found.
       def production_get_id_by_name(name, params = { })
         case_sensitive = params[:case_sensitive]
         name = name.dup.downcase unless case_sensitive
@@ -209,6 +210,7 @@ module AdobeAnywhere
         production_ids = [ ]
         productions_list
         productions = parsed_response['productions']
+        return production_ids unless productions
         productions.each do |production|
           production_name = production['properties']['name']
           production_name = production_name.downcase unless case_sensitive
@@ -377,7 +379,7 @@ module AdobeAnywhere
         data['authorizableId'] = authorizable_id
         data['rep:password'] = data['rep:re-password'] = password
 
-                                                 ### OPTIONAL PARAMETERS ##
+        ### OPTIONAL PARAMETERS ##
         title = search_hash!(params, :title)
         given_name = search_hash!(params, :given_name, :givenName, :givenname, :first_name, :firstName, :firstname) || 'undefined'
         family_name = search_hash!(params, :family_name, :familyName, :familyname, :last_name, :lastName, :lastname) || 'undefined'
@@ -491,7 +493,7 @@ module AdobeAnywhere
         return true if response.code == '200'
         false
       end # user_delete
-      alias :user_deletes :user_delete
+      alias :users_delete :user_delete
 
       #def users_photo_add(params = {})
       #  #
