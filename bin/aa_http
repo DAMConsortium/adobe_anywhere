@@ -16,6 +16,7 @@ options[:anywhere_default_host_address] = AdobeAnywhere::DEFAULT_HOST_ADDRESS
 options[:anywhere_default_host_port] = AdobeAnywhere::DEFAULT_PORT
 options[:anywhere_default_username] = AdobeAnywhere::DEFAULT_USERNAME
 options[:anywhere_default_password] = AdobeAnywhere::DEFAULT_PASSWORD
+options[:log_level] = Logger::WARN
 
 op = common_option_parser.new
 op.on('--binding BINDING', 'The address to bind the callback server to.', "\tdefault: #{options[:binding]}") { |v| options[:binding] = v }
@@ -27,9 +28,13 @@ op.on('--anywhere-default-password PASSWORD', 'The password to login to the Adob
 add_common_options
 op.parse_common
 
+options[:logger] = Logger.new(options[:log_to] || STDERR)
+options[:logger].level = options[:log_level]
+
 begin
   app = AdobeAnywhere::HTTP
   app.init(options)
+  app.logger.debug { 'Initialized Anywhere API HTTP.' }
   app.run!
 rescue ArgumentError => e
   abort(e.message)
