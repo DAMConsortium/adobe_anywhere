@@ -3,11 +3,11 @@ require 'optparse'
 module CLI
 
   LOGGING_LEVELS = {
-      :debug => Logger::DEBUG,
-      :info => Logger::INFO,
-      :warn => Logger::WARN,
-      :error => Logger::ERROR,
-      :fatal => Logger::FATAL
+    :debug => Logger::DEBUG,
+    :info => Logger::INFO,
+    :warn => Logger::WARN,
+    :error => Logger::ERROR,
+    :fatal => Logger::FATAL
   }
 
   class <<self
