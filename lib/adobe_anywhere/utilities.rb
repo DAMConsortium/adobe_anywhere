@@ -10,19 +10,19 @@ module AdobeAnywhere
     # @param [Symbol|Array<Symbol>] keys
     # @return [Any] (nil) The value associated with the key
     def search_hash!(hash, *keys)
-      params = (keys.is_a?(Array) and keys.last.is_a?(Hash)) ? keys.pop : { }
-      search_keys_as_symbols = params.fetch(:search_keys_as_symbols, true)
-      search_keys_as_strings = params.fetch(:search_keys_as_string, true)
+      options = (keys.is_a?(Array) and keys.last.is_a?(Hash)) ? keys.pop : { }
+      search_keys_as_symbols = options.fetch(:search_keys_as_symbols, true)
+      search_keys_as_strings = options.fetch(:search_keys_as_string, true)
 
-      ignored_strings = params.fetch(:ignored_strings, false)
-      case_sensitive = params.fetch(:case_sensitive, true)
+      ignored_strings = options.fetch(:ignored_strings, false)
+      case_sensitive = options.fetch(:case_sensitive, true)
 
-      if ignored_strings || case_sensitive
+      if ignored_strings || !case_sensitive
         search_processed_hash_keys = true
-        exact_match_first = params.fetch(:exact_match_first, true)
+        exact_match_first = options.fetch(:exact_match_first, true)
 
         processed_hash_keys = hash.keys.map do |key|
-          key.downcase rescue key if case_sensitive
+          key.downcase rescue key unless case_sensitive
           if ignored_strings
             ignored_strings = [*ignored_strings]
             ignored_strings.each { |ignored_string| key.gsub(ignored_string, '') }
@@ -36,9 +36,9 @@ module AdobeAnywhere
 
         if search_keys_as_symbols
           _key = key.to_sym rescue key
-          unless search_processed_hash_keys
+          if search_processed_hash_keys
             return hash.delete(_key) if exact_match_first && hash.has_key?(_key)
-            key_index = processed_hash_keys(_key)
+            key_index = processed_hash_keys.index(_key)
             return hash.delete(hash.keys[key_index]) if key_index
           else
             return hash.delete(_key) if hash.has_key?(_key)
@@ -47,9 +47,9 @@ module AdobeAnywhere
 
         if search_keys_as_strings
           _key = key.to_s rescue key
-          unless search_processed_hash_keys
+          if search_processed_hash_keys
             return hash.delete(_key) if exact_match_first && hash.has_key?(_key)
-            key_index = processed_hash_keys(_key)
+            key_index = processed_hash_keys.index(_key)
             return hash.delete(hash.keys[key_index]) if key_index
           else
             return hash.delete(_key) if hash.has_key?(_key)
