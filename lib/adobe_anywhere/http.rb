@@ -12,10 +12,6 @@ module AdobeAnywhere
     # ROUTES END
 
     def self.init(args = { })
-      set(:bind, args.delete(:binding))
-      set(:port, args.delete(:local_port))
-      set(:initial_options, args)
-
       args.each { |k,v| set(k, v) }
       def logger; settings.logger end if settings.logger
     end # new
