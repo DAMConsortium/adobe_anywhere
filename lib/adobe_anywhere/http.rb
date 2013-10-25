@@ -12,6 +12,10 @@ module AdobeAnywhere
     # ROUTES END
 
     def self.init(args = { })
+      set(:bind, args.delete(:binding))
+      set(:port, args.delete(:local_port))
+      set(:initial_options, args)
+
       args.each { |k,v| set(k, v) }
       def logger; settings.logger end if settings.logger
     end # new
@@ -34,7 +38,6 @@ module AdobeAnywhere
       end
       _response
     end # output_response
-
 
     # Will try to convert a body to parameters and merge them into the params hash
     # Params will override the body parameters
@@ -59,8 +62,13 @@ module AdobeAnywhere
       indifferent_hash.merge(_params)
     end # merge_params_from_body
 
-
-
+    # @param [Hash] _params
+    # @option _params [String] :method_name (Required)
+    # @option _params [String] :method_arguments (Optional)
+    # @option _params [String] :host_address
+    # @option _params [String|Integer] :port
+    # @option _params [String] :username
+    # @option _params [String] :password
     def handle_request_api(_params = params)
       _params = _params.dup
       _params = merge_params_from_body(_params)
@@ -76,15 +84,14 @@ module AdobeAnywhere
         aa.login
       rescue => e
         logger.warn { "Exception While Logging into Anywhere. #{e.message}\nBacktrace:\n#{e.backtrace}" }
-        _response = format_response({ :exception => { :message => e.message, :backtrace => e.backtrace } })
-        return _response
+        return format_response({ :exception => { :message => e.message, :backtrace => e.backtrace } })
       end
 
       method_name = search_hash!(_params, :method_name, :method, :command, :procedure)
       return format_response({ :error => { :message => ':method_name is a required argument.' } }) unless method_name
 
       method_name = method_name.sub('-', '_').to_sym
-      method_arguments = search_hash!(_params, :arguments)
+      method_arguments = search_hash!(_params, :method_arguments, :arguments)
       method_arguments = JSON.parse(method_arguments) rescue method_arguments if method_arguments.is_a?(String)
       logger.debug { "\nMethod Name: #{method_name}\nArguments: #{method_arguments}" }
 
@@ -103,7 +110,7 @@ module AdobeAnywhere
       end
       logger.debug { "Response: #{_response}" }
       format_response(_response)
-    end
+    end # handle_request_api
 
   end # HTTP
 
