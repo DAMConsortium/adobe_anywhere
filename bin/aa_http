@@ -1,4 +1,10 @@
 #!/usr/bin/env ruby
+if %w(start stop restart reload run zap status).include?((command = ARGV.first) ? command.downcase : command)
+  require 'daemons'
+  Daemons.run($0)
+  exit
+end
+
 begin
   require 'cli'
   require 'adobe_anywhere/http'
