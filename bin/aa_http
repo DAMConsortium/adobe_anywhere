@@ -18,6 +18,8 @@ rescue LoadError
   abort('Failed to load the AdobeAnywhere gem.')
 end
 
+options[:binding] = '0.0.0.0'
+options[:local_port] = '4567'
 options[:anywhere_default_host_address] = AdobeAnywhere::DEFAULT_HOST_ADDRESS
 options[:anywhere_default_host_port] = AdobeAnywhere::DEFAULT_PORT
 options[:anywhere_default_username] = AdobeAnywhere::DEFAULT_USERNAME
@@ -25,8 +27,8 @@ options[:anywhere_default_password] = AdobeAnywhere::DEFAULT_PASSWORD
 options[:log_level] = Logger::WARN
 
 op = common_option_parser.new
-op.on('--binding BINDING', 'The address to bind the callback server to.', "\tdefault: #{options[:binding]}") { |v| options[:binding] = v }
-op.on('--port PORT', 'The port that the callback server should listen on.', "\tdefault: #{options[:local_port]}") { |v| options[:local_port] = v }
+op.on('--binding BINDING', 'The address to bind the server to.', "\tdefault: #{options[:binding]}") { |v| options[:binding] = v }
+op.on('--port PORT', 'The port that the server should listen on.', "\tdefault: #{options[:local_port]}") { |v| options[:local_port] = v }
 op.on('--anywhere-default-host-address ADDRESS', 'The IP or hostname to use to contact the Adobe Anywhere Server when one is not specified in the XML.') { |v| options[:anywhere_default_host_address] = v }
 op.on('--anywhere-default-host-port PORT', 'The port to use to contact the Adobe Anywhere Server when one is not specified in the XML.') { |v| options[:anywhere_default_host_port] = v }
 op.on('--anywhere-default-username USERNAME', 'The username to login to the Adobe Anywhere Server when one is not specified in the XML.') { |v| options[:anywhere_default_username] = v }
