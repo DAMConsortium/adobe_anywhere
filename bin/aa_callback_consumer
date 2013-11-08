@@ -1,7 +1,4 @@
 #!/usr/bin/env ruby
-require 'optparse'
-require 'pp'
-
 if %w(start stop restart reload run zap status).include?((command = ARGV.first) ? command.downcase : command)
   require 'daemons'
   Daemons.run($0)
@@ -9,7 +6,7 @@ if %w(start stop restart reload run zap status).include?((command = ARGV.first) 
 end
 
 begin
-  require 'adobe_anywhere/callback_monitor'
+  require 'adobe_anywhere/callback_monitor/cli'
 rescue LoadError
   lib_path = File.expand_path('../../lib', __FILE__)
   unless $:.include?(lib_path)
@@ -19,85 +16,4 @@ rescue LoadError
   end
   abort("Failed to load the AdobeAnywhere gem. #{$!}")
 end
-
-# Logging level Hash used for the named log level options
-LOGGING_LEVELS = { :debug => Logger::DEBUG, :info => Logger::INFO, :warn => Logger::WARN,
-                   :error => Logger::ERROR, :fatal => Logger::FATAL }
-
-app = AdobeAnywhere::CallbackMonitor
-
-options = { }
-options[:mig_executable_path] = '/Library/Scripts/ubiquity/media_processing_tool/bin/mig'
-options[:binding] = '0.0.0.0'
-options[:local_port] = 4567
-options[:log_level] = Logger::DEBUG
-options[:log_to] = STDOUT
-
-op = OptionParser.new
-
-op.on('--config-file FILEPATH', 'Required. The path to the configuration file.') { |v| options[:config_file_path] = v }
-op.on('--aa-host-address HOSTADDRESS', 'The AdobeAnywhere Server Host Address.') do |v|
-  options[:host_address] = v
-end
-op.on('--aa-port PORT', 'The AdobeAnywhere Server Port.') { |v| options[:port] = v }
-op.on('--aa-username USERNAME', 'The username to use when logging into the AdobeAnywhere Server.') do |v|
-  options[:username] = v
-end
-op.on('--aa-password PASSWORD', 'The password to use when logging into the AdobeAnywhere Server.') do |v|
-  options[:password] = v
-end
-op.on('--[no-]mig-path [FILEPATH]', 'The path to the Media Information Gatherer executable.',
-      'No information will be gathered on an asset if this is not specified.') { |v| options[:mig_executable_path] = v }
-op.on('--binding BINDING', 'The address to bind the callback server to.', "\tdefault: #{options[:binding]}") do |v|
-  options[:binding] = v
-end
-op.on('--port PORT', 'The port that the callback server should listen on.', "\tdefault: #{options[:local_port]}") do |v|
-  options[:local_port] = v
-end
-op.on('--log-to FILEPATH', 'The location to log to.', "\tdefault: STDERR") { |v| options[:log_to] = v }
-
-op.on('--log-level LEVEL', LOGGING_LEVELS.keys, "Logging level. Available Options: #{LOGGING_LEVELS.keys.join(', ')}",
-      "\tdefault: #{LOGGING_LEVELS.invert[options[:log_level]]}") { |v| options[:log_level] = LOGGING_LEVELS[v] }
-
-op.on('--[no-]options-file [FILEPATH]', 'An option file to use to set additional command line options.' ) do |v|
-  options[:options_file_name] = v
-end
-op.on_tail('-h', '--help', 'Show this message.') { puts op; exit }
-
-# Parse the command line so that we can see if we have an options file
-op.parse!(ARGV.dup)
-options_file_name = options[:options_file_name]
-
-# Make sure that options from the command line override those from the options file
-op.parse!(ARGV.dup) if op.load(options_file_name)
-
-logger = Logger.new(options[:log_to] || STDOUT)
-logger.level = options[:log_level]
-
-options[:logger] = logger
-
-config_file_path = options[:config_file_path]
-abort('A configuration file path must be specified.') unless config_file_path
-abort("File Not Found. #{config_file_path}") unless File.exist?(config_file_path)
-
-aa = AdobeAnywhere::API::Utilities.new(options)
-aa.parse_response = true
-aa.http.log_request_body = true
-aa.http.log_response_body = true
-aa.http.log_pretty_print_body = true
-
-abort('Login to the AdobeAnywhere server failed.') unless aa.login
-
-options[:aa] = aa
-
-app.set(:logger, logger)
-#existing_methods = app.methods
-app.set(:bind, options.delete(:binding))
-app.set(:port, options.delete(:local_port))
-app.set(:initial_options, options)
-
-#logger.debug { "Settings #{(app.methods - existing_methods).keep_if { |v| !v.to_s.end_with?('?', '=')}}" }
-app.run!
-
-
-
+AdobeAnywhere::CallbackMonitor::CLI.new
