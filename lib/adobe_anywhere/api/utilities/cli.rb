@@ -17,13 +17,13 @@ module AdobeAnywhere
             :options_file_path => File.expand_path(File.basename($0, '.*'), '~/.options'),
           })
           op = OptionParser.new
-          op.on('--host-address HOSTADDRESS', 'The AdobeAnywhere server address.',
+          op.on('--adobe-anywhere-host-address HOSTADDRESS', 'The AdobeAnywhere server address.',
                 "\tdefault: #{options[:host_address]}") { |v| options[:host_address] = v }
-          op.on('--port PORT', 'The port on the AdobeAnywhere server to connect to.',
+          op.on('--adobe-anywhere-host-port PORT', 'The port on the AdobeAnywhere server to connect to.',
                 "\tdefault: #{options[:port]}") { |v| options[:port] = v }
-          op.on('--username USERNAME', 'The username to login with. This will be ignored if cookie contents is set and the force login parameter is false.',
+          op.on('--adobe-anywhere-username USERNAME', 'The username to login with. This will be ignored if cookie contents is set and the force login parameter is false.',
                 "\tdefault: #{options[:username]}") { |v| options[:username] = v }
-          op.on('--password PASSWORD', 'The password to login with. This will be ignored if cookie contents is set and the force login parameter is false.',
+          op.on('--adobe-anywhere-password PASSWORD', 'The password to login with. This will be ignored if cookie contents is set and the force login parameter is false.',
                 "\tdefault: #{options[:password]}") { |v| options[:password] = v }
           op.on('--force-login', 'Forces a new cookie even if cookie information is present.') { |v| options[:force_login] = v }
           op.on('--method-name METHODNAME', '') { |v| options[:method_name] = v }
