@@ -69,7 +69,7 @@ Usage: aa [options]
     ./aa --method-name production_create --method-arguments '{"name":"Test"}' --username admin --password admin
 
 ##### Add an asset to a production. If there are multiple productions with the same name then the asset is added to each production
-    ./aa --method-name production_asset_add --method-arguments '{ "production_name": "Test", "media_paths": "eamedia://media/1.mov" }'
+    ./aa --method-name production_asset_add --method-arguments '{ "production_name": "TEST", "media_paths": "eamedia://media/5.mov", "update_job_callback_uri": "http://0.0.0.0:0000/" }'
 
 ##### Get the href of an export preset
     ./aa --method-name export_preset_uri_by_name --method-arguments 'XPC'
