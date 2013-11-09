@@ -616,7 +616,9 @@ module AdobeAnywhere
 
       production_id = search_hash!(params, :production_id, :productionId, :productionid, :id)
       production_url = search_hash!(params, :production_url, :productionURL, :productionurl, :url)
-      production_url ||= File.join(http.to_s, "content/ea/git/productions/#{production_id}/HEAD.v1.json")
+      production_url ||= File.join(http.to_s, "content/ea/git/productions/#{production_id}/HEAD.v1.json") if production_id
+
+
       destination_path = search_hash!(params, :destination_path, :destinationPath, :destinationpath, :destination)
       production_converter_type = search_hash!(params, :production_converter_type, :productionConverterType, :productionconvertertype, :type)
 
