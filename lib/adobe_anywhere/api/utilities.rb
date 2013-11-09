@@ -253,7 +253,7 @@ module AdobeAnywhere
             destination_path = File.join(destination_path, mount_point_destination_path ) if mount_point_destination_path
             destination_path = File.join(destination_path, output_file_name) if output_file_name
             destination_path = destination_path[1..-1] if destination_path.start_with?('/')
-            destination_path = "eamedia://#{destination_path}"
+            destination_path = "eamedia://#{destination_path}" unless destination_path.start_with?('eamedia')
             params[:destination_path] = destination_path
           end
         end
