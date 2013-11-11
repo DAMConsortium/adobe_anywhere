@@ -124,9 +124,12 @@ module AdobeAnywhere
         if production_name
           production_id = [*production_id]
           production_id += production_get_id_by_name(production_name)
+          response = production_id.map { |pid| params[:production_id] = pid; super(params) }
+          return response
+        else
+          params[:production_id] = production_id
+          super(params)
         end
-        params[:production_id] = production_id
-        super(params)
       end
       alias :production_grant_group_access :production_access_add
       alias :production_grant_user_access :production_access_add
@@ -139,9 +142,12 @@ module AdobeAnywhere
         if production_name
           production_id = [*production_id]
           production_id += production_get_id_by_name(production_name)
+          response = production_id.map { |pid| params[:production_id] = pid; super(params) }
+          return response
+        else
+          params[:production_id] = production_id
+          super(params)
         end
-        params[:production_id] = production_id
-        super(params)
       end
       alias :production_delete_group_access :production_access_delete
       alias :production_delete_user_access :production_access_delete
@@ -154,8 +160,12 @@ module AdobeAnywhere
         if production_name
           production_id = [*production_id]
           production_id += production_get_id_by_name(production_name)
+          response = production_id.map { |pid| params[:production_id] = pid; super(params) }
+          return response
+        else
+          params[:production_id] = production_id
+          super(params)
         end
-        super(production_id)
       end
 
       # Adds an asset to a production.
@@ -170,10 +180,12 @@ module AdobeAnywhere
         if production_name
           production_id = [*production_id]
           production_id += production_get_id_by_name(production_name)
+          response = production_id.map { |pid| params[:production_id] = pid; job_ingest_create(params) }
+          return response
+        else
+          params[:production_id] = production_id
+          job_ingest_create(params)
         end
-        params[:production_id] = production_id
-
-        job_ingest_create(params)
       end # production_asset_add
 
       # Lists a productions assets.
