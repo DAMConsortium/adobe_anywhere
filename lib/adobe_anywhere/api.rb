@@ -669,7 +669,7 @@ module AdobeAnywhere
       call_params = { }
       call_params['userId'] = user_id if user_id
       call_params['groupId'] = group_id if group_id
-      http_post_json("content/ea/git/productions/#{production_id}.access.v1.json", call_params)
+      http_post_json("content/ea/api/productions/#{production_id}.access.v1.json", call_params)
     end # production_access_add
 
     def production_access_delete(params)
