@@ -72,16 +72,16 @@ Usage: aa [options]
     ./aa --method-name production_asset_add --method-arguments '{ "production_name": "TEST", "media_paths": "eamedia://media/5.mov", "update_job_callback_uri": "http://0.0.0.0:0000/" }'
 
 ##### Assign Group Membership to a production
-    ./aa --method-name production_grant_group_access--method-arguments '{"group_id":"test"}'
+    ./aa --method-name production_grant_group_access --method-arguments '{"production_name":"test", "group_id":"test"}'
 
 ##### Assign User Membership to a production
-    ./aa --method-name production_grant_user_access--method-arguments '{"user_id":"test"}'n
+    ./aa --method-name production_grant_user_access --method-arguments '{"production_name":"test", "user_id":"test"}'
     
 ##### Delete Group Membership to a production
-    ./aa --method-name production_delete_group_access--method-arguments '{"group_id":"test"}'
+    ./aa --method-name production_delete_group_access --method-arguments '{"production_name":"test", "group_id":"test"}'
 
 ##### Delete User Membership to a production
-    ./aa --method-name production_delete_user_access--method-arguments '{"user_id":"test"}'
+    ./aa --method-name production_delete_user_access --method-arguments '{"production_name":"test", "user_id":"test"}'
     
 ##### Get the href of an export preset
     ./aa --method-name export_preset_uri_by_name --method-arguments 'XPC'
@@ -147,6 +147,8 @@ Usage: aa [options]
   * node_controller_list []
   * node_controller_status []
   * parsed_response []
+  * production_access_add [[:req, :params]]
+  * production_access_delete [[:req, :params]]
   * production_asset_add [[:opt, :params]]
   * production_asset_delete [[:req, :etag]]
   * production_asset_list [[:opt, :params]]
