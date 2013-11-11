@@ -667,8 +667,8 @@ module AdobeAnywhere
 
       production_id = search_hash!(params, :production_id)
       call_params = { }
-      call_params['user_id'] = user_id if user_id
-      call_params['group_id'] = group_id if group_id
+      call_params['userId'] = user_id if user_id
+      call_params['groupId'] = group_id if group_id
       http_post("content/ea/git/productions/#{production_id}.access.v1.json", call_params)
     end # production_access_add
 
