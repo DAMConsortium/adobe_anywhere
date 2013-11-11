@@ -71,6 +71,12 @@ Usage: aa [options]
 ##### Add an asset to a production. If there are multiple productions with the same name then the asset is added to each production
     ./aa --method-name production_asset_add --method-arguments '{ "production_name": "TEST", "media_paths": "eamedia://media/5.mov", "update_job_callback_uri": "http://0.0.0.0:0000/" }'
 
+##### Assign Group Membership to a production
+    ./aa --method-name production_grant_group_access--method-arguments '{"group_id":"test"}'
+
+##### Assign User Membership to a production
+    ./aa --method-name production_grant_user_access--method-arguments '{"user_id":"test"}'n
+    
 ##### Get the href of an export preset
     ./aa --method-name export_preset_uri_by_name --method-arguments 'XPC'
 
