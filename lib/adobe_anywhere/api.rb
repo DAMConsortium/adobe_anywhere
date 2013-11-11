@@ -656,6 +656,31 @@ module AdobeAnywhere
     end # production_list
     alias :productions_list :production_list
 
+    def production_access_list(production_id)
+      http_get("content/ea/git/productions/#{production_id}.access.v1.json")
+    end # production_access_list
+
+    def production_access_add(params = { })
+      params = params.dup
+      user_id = search_hash!(params, :user_id)
+      group_id = search_hash!(params, :group_id)
+
+      production_id = search_hash!(params, :production_id)
+      call_params = { }
+      call_params['user_id'] = user_id if user_id
+      call_params['group_id'] = group_id if group_id
+      http_post("content/ea/git/productions/#{production_id}.access.v1.json", call_params)
+    end # production_access_add
+
+    def production_access_delete(params)
+      params = params.dup
+      production_id = search_hash!(params, :production_id)
+      user_id = search_hash!(params, :user_id)
+      group_id = search_hash!(params, :group_id)
+      id = user_id || group_id
+      http_delete("content/ea/git/productions/#{production_id}.access.v1.json/#{id}")
+    end # production_access_delete
+
     def production_asset_delete(etag)
       #params = params.dup
       #production_id = search_hash!(params, :production_id, :productionId, :productionid)

@@ -116,6 +116,33 @@ module AdobeAnywhere
         false
       end # job_production_conversion_create
 
+      def production_access_add(params = { })
+        params = params.dup
+        production_name = search_hash!(params, :production_name, :productionname)
+        production_id = search_hash!(params, :production_id, :productionId, :productionid)
+
+        if production_name
+          production_id = [*production_id]
+          production_id += production_get_id_by_name(production_name)
+        end
+        params[:production_id] = production_id
+      end
+      alias :production_grant_group_access :production_access_add
+      alias :production_grant_user_access :production_access_add
+
+      def production_access_delete(params = { })
+        params = params.dup
+        production_name = search_hash!(params, :production_name, :productionname)
+        production_id = search_hash!(params, :production_id, :productionId, :productionid)
+
+        if production_name
+          production_id = [*production_id]
+          production_id += production_get_id_by_name(production_name)
+        end
+        params[:production_id] = production_id
+      end
+      alias :production_delete_group_access :production_access_delete
+      alias :production_delete_user_access :production_access_delete
 
       # Adds an asset to a production.
       # @param [Hash] params
