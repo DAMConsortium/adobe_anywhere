@@ -77,6 +77,12 @@ Usage: aa [options]
 ##### Assign User Membership to a production
     ./aa --method-name production_grant_user_access--method-arguments '{"user_id":"test"}'n
     
+##### Delete Group Membership to a production
+    ./aa --method-name production_delete_group_access--method-arguments '{"group_id":"test"}'
+
+##### Delete User Membership to a production
+    ./aa --method-name production_delete_user_access--method-arguments '{"user_id":"test"}'
+    
 ##### Get the href of an export preset
     ./aa --method-name export_preset_uri_by_name --method-arguments 'XPC'
 
