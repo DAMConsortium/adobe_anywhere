@@ -126,6 +126,7 @@ module AdobeAnywhere
           production_id += production_get_id_by_name(production_name)
         end
         params[:production_id] = production_id
+        super(params)
       end
       alias :production_grant_group_access :production_access_add
       alias :production_grant_user_access :production_access_add
@@ -140,9 +141,22 @@ module AdobeAnywhere
           production_id += production_get_id_by_name(production_name)
         end
         params[:production_id] = production_id
+        super(params)
       end
       alias :production_delete_group_access :production_access_delete
       alias :production_delete_user_access :production_access_delete
+
+      def production_access_list(params = { })
+        params = params.dup
+        production_name = search_hash!(params, :production_name, :productionname)
+        production_id = search_hash!(params, :production_id, :productionId, :productionid)
+
+        if production_name
+          production_id = [*production_id]
+          production_id += production_get_id_by_name(production_name)
+        end
+        super(production_id)
+      end
 
       # Adds an asset to a production.
       # @param [Hash] params
