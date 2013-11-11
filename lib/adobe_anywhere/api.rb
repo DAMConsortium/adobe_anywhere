@@ -679,6 +679,7 @@ module AdobeAnywhere
       group_id = search_hash!(params, :group_id)
       id = user_id || group_id
       http_delete("content/ea/api/productions/#{production_id}.access.v1.json/#{id}")
+      http.success?
     end # production_access_delete
 
     def production_asset_delete(etag)
@@ -708,8 +709,7 @@ module AdobeAnywhere
       #e_tag = search_hash!(params, :e_tag, :ETag, :eTag, :etag)
       #delete("content/ea/git/productions/#{production_id}/HEAD.v1.json", { 'If-Match' => e_tag })
       http_delete("content/ea/git/productions/#{production_id}/#{production_version}.v1.json")
-      #return true if response.code == 204
-      #false
+      http.success?
     end # production_delete
 
     # Creates a new production asset export job.
