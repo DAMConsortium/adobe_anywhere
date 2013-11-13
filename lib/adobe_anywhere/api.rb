@@ -641,8 +641,11 @@ module AdobeAnywhere
     # custom json properties may be added to the request and will be stored on the server with the production
     def production_create(params = {})
       params = params.dup
+
+      description = search_hash!(params, :description, :production_description)
+
       params['name'] = search_hash!(params, :name, :production_name)
-      params['description'] = search_hash!(params, :description, :production_description)
+      params['description'] = description if description
       http_post_json('content/ea/git/productions.v1.json', params)
     end # production_create
 
@@ -656,11 +659,16 @@ module AdobeAnywhere
     end # production_list
     alias :productions_list :production_list
 
+    # @param [String] production_id
     def production_access_list(production_id)
       http_get("content/ea/api/productions/#{production_id}.access.v1.json")
     end # production_access_list
 
-    def production_access_add(params = { })
+    # @param [Hash] params
+    # @option params [String] :production_id
+    # @option params [String] :user_id
+    # @option params [String] :group_id
+    def production_access_add(params)
       params = params.dup
       user_id = search_hash!(params, :user_id)
       group_id = search_hash!(params, :group_id)
@@ -672,6 +680,7 @@ module AdobeAnywhere
       http_post_json("content/ea/api/productions/#{production_id}.access.v1.json", call_params)
     end # production_access_add
 
+    # @return [Boolean] The HTTP success status
     def production_access_delete(params)
       params = params.dup
       production_id = search_hash!(params, :production_id)
@@ -700,8 +709,9 @@ module AdobeAnywhere
 
     # Deletes a production.
     # @param [Hash] params
-    # @option params [String] :production_id
-    # @option parmas []
+    # @option params [String] :production_id (Required)
+    # @option params [String] :production_version ('HEAD')
+    # @return [Boolean] The HTTP success status
     def production_delete(params = {})
       params = params.dup
       production_id = search_hash!(params, :production_id, :productionId, :productionid, :id)
