@@ -60,6 +60,17 @@ module AdobeAnywhere
     # Debug output for all requests and responses is also handled by this method.
     # @param [HTTPRequest] request
     def process_request(request)
+
+      # USER AGENT MUST HAVE A String/String format or the following error will occur
+      # java.lang.IllegalArgumentException: The validated string is empty
+      # at org.apache.commons.lang.Validate.notEmpty(Validate.java:321)
+      # at org.apache.commons.lang.Validate.notEmpty(Validate.java:339)
+      # at com.adobe.ea.model.core.client.Application.<init>(Application.java:36)
+      # at com.adobe.ea.model.core.client.Application.fromUserAgent(Application.java:60)
+      # at com.adobe.ea.servlets.internal.core.client.ClientInfoService.clientInfoFromRequest(ClientInfoService.java:36)
+      # at com.adobe.ea.git.servlets.productions.ProductionsPostServlet.domainLogicCreateProduction(ProductionsPostServlet.java:279)
+      request['User-Agent'] = "Ruby/#{RUBY_VERSION}"
+
       request['Cookie'] = cookie if cookie
       logger.debug { redact_passwords(%(REQUEST: #{request.method} #{to_s}#{request.path} HEADERS: #{request.to_hash.inspect} #{log_request_body and request.request_body_permitted? ? "BODY: #{format_body_for_log_output(request)}" : ''})) }
 
@@ -102,14 +113,12 @@ module AdobeAnywhere
     # @param [Hash|String] data
     def process_put_and_post_requests(request, data)
       content_type = request['Content-Type'] ||= 'application/x-www-form-urlencoded'
-      if data.is_a?(Hash)
-        case content_type
+      case content_type
         when 'application/x-www-form-urlencoded'; request.form_data = data
-        when 'application/json'; request.body = JSON.generate(data)
-        end
-      else
-        #data = data.to_s unless request.body.is_a?(String)
-        request.body = data
+        when 'application/json'; request.body = (data.is_a?(Hash) or data.is_a?(Array)) ? JSON.generate(data) : data
+        else
+          #data = data.to_s unless request.body.is_a?(String)
+          request.body = data
       end
       process_request(request)
     end # process_form_request
@@ -270,7 +279,7 @@ module AdobeAnywhere
     # @param [String] path
     # @param [Hash] headers
     # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-    # it's content type. If content type is not support then the respond body is returned.
+    # it's content type. If content type is not supported then the response body is returned.
     #
     # If parse_response? is false then the response body is returned.
     def http_delete(path, headers = {})
@@ -284,7 +293,7 @@ module AdobeAnywhere
     # @param [String] path
     # @param [Hash] headers
     # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-    # it's content type. If content type is not support then the respond body is returned.
+    # it's content type. If content type is not supported then the response body is returned.
     #
     # If parse_response? is false then the response body is returned.
     def http_get(path, headers = { })
@@ -299,7 +308,7 @@ module AdobeAnywhere
     # @param [String] data
     # @param [Hash] headers
     # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-    # it's content type. If content type is not support then the respond body is returned.
+    # it's content type. If content type is not supported then the response body is returned.
     #
     # If parse_response? is false then the response body is returned.
     def http_post(path, data, headers = {})
@@ -314,7 +323,7 @@ module AdobeAnywhere
     # @param [Hash] data
     # @param [Hash] headers
     # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-    # it's content type. If content type is not support then the respond body is returned.
+    # it's content type. If content type is not supported then the response body is returned.
     #
     # If parse_response? is false then the response body is returned.
     def http_post_form(path, data, headers = {})
@@ -332,11 +341,11 @@ module AdobeAnywhere
     # @param [Hash] data
     # @param [Hash] headers
     # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-    # it's content type. If content type is not support then the respond body is returned.
+    # it's content type. If content type is not supported then the response body is returned.
     #
     # If parse_response? is false then the response body is returned.
     def http_post_json(path, data, headers = {})
-      headers['Content-Type'] = 'application/json'
+      headers['Content-Type'] ||= 'application/json'
       data_as_string = JSON.generate(data)
       http_post(path, data_as_string, headers)
     end # http_post_json
