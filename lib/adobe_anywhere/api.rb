@@ -79,6 +79,7 @@ module AdobeAnywhere
       response = http.request(request)
       logger.debug { %(RESPONSE: #{response.inspect} HEADERS: #{response.to_hash.inspect} #{log_response_body and response.respond_to?(:body) ? "BODY: #{format_body_for_log_output(response)}" : ''}) }
 
+
       #TODO PROCESS ETAG RELATED RESPONSES (304 ?and 412?)
 
       #TODO RECORD RESPONSE E-TAG
@@ -409,10 +410,11 @@ module AdobeAnywhere
     # Will pass through the response body unless the content type is supported.
     def parsed_response
       #logger.debug { "Parsing Response: #{response.content_type}" }
+      return response unless response
       @parsed_response ||= case response.content_type
                              when 'application/json'; JSON.parse(response.body)
                              when 'text/html'; HTMLResponseParser.parse(response.body)
-                             else; response.to_hash
+                             else; response.respond_to?(:to_hash) ? response.to_hash : response.to_s
                            end
       @parsed_response
     end # parsed_response
@@ -474,7 +476,7 @@ module AdobeAnywhere
 
       logger.debug { "Logging In As User: '#{username}' Using Password: #{password ? 'yes' : 'no'}" }
       http_post_form('app/ea/j_security_check?resource=/content/ea/api/discovery.v1.json', data)
-      self.http_cookie = response['set-cookie'] if response.code == '302'
+      self.http_cookie = response['set-cookie'] if response and response.code == '302'
       http_cookie
     end # login
 
