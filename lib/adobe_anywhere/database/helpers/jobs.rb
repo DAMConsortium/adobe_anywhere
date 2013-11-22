@@ -43,12 +43,15 @@ module AdobeAnywhere::Database::Helpers
               }
               record_id = db.insert(job_record)
               job_record['_id'] = record_id
+              job_before = { }
               job_diff = job
             else
               new_record = false
+
               most_recent_etag = job_record['most_recent_etag']
+              job_before = most_recent_etag ? job_record['details_by_etag'][most_recent_etag] : { }
+
               if job_etag != most_recent_etag
-                job_before = job_record['details_by_etag'][most_recent_etag]
                 job_record['details_by_etag'][job_etag] = job
                 job_record['most_recent_etag'] = job_etag
                 job_record['most_recent_state'] = job_state
@@ -70,7 +73,7 @@ module AdobeAnywhere::Database::Helpers
               #  logger.debug { 'Record has changed.' }
               #end
             end
-            _response = { :record => job_record, :is_new => new_record }
+            _response = { :record => job_record, :is_new => new_record, :before => job_before }
             _response[:difference] = job_diff if return_diff
             _response
           end # save_changes
