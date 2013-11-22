@@ -7,6 +7,11 @@ module AdobeAnywhere
 
     class Utilities < AdobeAnywhere::API
 
+      def initialize(params = { })
+        super(params)
+        @parse_response = params.fetch(:parse_response, true)
+      end
+
       # @param [String] name
       # @param [Hash] params
       # @option [Boolean] :case_sensitive (false)
@@ -560,6 +565,39 @@ module AdobeAnywhere
       #  #username = params[:username]
       #  #path = "home/users/#{username[0..1]}/#{username}/profile/photos/primary"
       #end # users_photo_add
+
+      # @param [Hash] job_details The output of a JobDetails call for a job
+      # @param [Hash] options
+      # @option options [Boolean] :raise_exceptions If true then exceptions will be raised if job_details in an unknown format
+      # @return [False|String] The URI to the job details
+      def get_self_link_href_from_job_details(job_details, options = { })
+        raise_exceptions = options.fetch(:raise_exceptions, true)
+        unless job_details.is_a?(Hash)
+          return false unless raise_exceptions
+          raise ArgumentError, "job_details argument is required to be a hash. job_details class name: #{job_details.class.name}. job_details: #{job_details}"
+        end
+
+        links = job_details['links']
+        unless links.is_a?(Array)
+          return false unless raise_exceptions
+          raise ArgumentError, "job_details['links'] must be an array. links class name: #{links.class.name} job_details = #{job_details}"
+        end
+
+        self_link_index = links.index { |link| link['rel'].downcase == 'self' }
+        unless self_link_index
+          return false unless raise_exceptions
+          raise ArgumentError, "job_details['links']['self'] not found. job_details = #{job_details}"
+        end
+
+        self_link = links[self_link_index]
+        unless self_link.is_a?(Hash)
+          return false unless raise_exceptions
+          raise ArgumentError, "job_details['links']['self']['href'] not found. job_details = #{job_details}"
+        end
+
+        self_link['href']
+      end # get_self_link_href_from_job_details
+
 
     end # Utilities
 
