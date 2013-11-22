@@ -28,7 +28,7 @@ module AdobeAnywhere
         op.on('--adobe-anywhere-host-address HOSTADDRESS', 'The AdobeAnywhere Server Host Address.') do |v|
           options[:host_address] = v
         end
-        op.on('--adobe-anywhere-port PORT', 'The AdobeAnywhere Server Port.') { |v| options[:port] = v }
+        op.on('--adobe-anywhere-host-port PORT', 'The AdobeAnywhere Server Port.') { |v| options[:port] = v }
         op.on('--adobe-anywhere-username USERNAME', 'The username to use when logging into the AdobeAnywhere Server.') do |v|
           options[:username] = v
         end
