@@ -24,7 +24,7 @@ module AdobeAnywhere
         op = OptionParser.new
         op.on('--config-file FILEPATH', 'Required. The path to the configuration file.') { |v| options[:config_file_path] = v }
         op.on('--[no-]poll-interval [POLLINTERVAL]', 'The interval in which to poll for new files in the file paths.',
-              "\tdefault: #{options[:poll_interval]}") { |v| options[:poll_interval] = v.to_i }
+              "\tdefault: #{options[:poll_interval]}") { |v| options[:poll_interval] = v.respond_to?(:to_i) ? v.to_i : false }
         op.on('--adobe-anywhere-host-address HOSTADDRESS', 'The AdobeAnywhere Server Host Address.') do |v|
           options[:host_address] = v
         end
@@ -61,7 +61,7 @@ module AdobeAnywhere
         if options[:poll_interval]
           AdobeAnywhere::JobMonitor.start(options)
         else
-          AdobeAnywhere::JobMonitor.process(options)
+          AdobeAnywhere::JobMonitor.run(options)
         end
 
       end # self.run
