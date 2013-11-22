@@ -1,4 +1,10 @@
 #!/usr/bin/env ruby
+if %w(start stop restart reload run zap status).include?((command = ARGV.first) ? command.downcase : command)
+  require 'daemons'
+  Daemons.run($0)
+  exit
+end
+
 begin
   require 'adobe_anywhere/job_monitor/cli'
 rescue LoadError
@@ -10,4 +16,5 @@ rescue LoadError
   end
   abort("Failed to load the AdobeAnywhere gem. #{$!}")
 end
-AdobeAnywhere::JobMonitor::CLI.run
+
+AdobeAnywhere::JobMonitor::CLI.run #rescue abort($!.to_s)
