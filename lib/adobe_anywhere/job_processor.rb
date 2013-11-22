@@ -28,6 +28,9 @@ module AdobeAnywhere
 
     attr_accessor :asset_media_information
 
+    ####################################
+
+
     def initialize(args = {})
 
       initialize_logger(args)
@@ -73,14 +76,48 @@ module AdobeAnywhere
 
       local_file_path = substitute_path(file_path)
       logger.debug { "Running MIG on path: LOCAL: '#{local_file_path}' REMOTE: '#{file_path}'" }
-      response = command_line_execute("#{mig_executable_path} '#{local_file_path}'")
-      asset_media_info = response[:success] ? JSON.parse(response[:stdout]) : { }
+      response = command_line_execute([ mig_executable_path, local_file_path])
+      if response[:success]
+        begin
+          asset_media_info = JSON.parse(response[:stdout])
+        rescue => e
+          asset_media_info = { :exception => { :message => $!, :backtrace => $? } }
+        end
+      else
+        response.delete(:status)
+        asset_media_info = response
+      end
       asset_media_info
+    end # mig
+
+    def parse_job_for_self_link_href(job)
+      job_links = job['links']
+      return false unless job_links
+
+      self_link_index = job_links.index { |link| link['rel'].downcase == 'self' }
+      return false unless self_link_index
+
+      self_link = job_links[self_link_index]
+      self_link_href = self_link['href']
+      self_link_href
     end
 
-
     def process_job(job, params = {})
+      logger.debug { "#{self.class.name}.#{__method__}(#{job})" }
+
       @production = @assets = @asset_media_information = nil
+
+      self_link_href = aa.get_self_link_href_from_job_details(job)
+
+      # Transfer jobs don't give job parameter information so we go get the job detail
+      unless job.has_key?('ea:parameters')
+      _job = aa.http_get(self_link_href)
+        if _job.is_a?(Hash)
+          job = _job
+        else
+          logger.warn { "Failed to get job details using the job URI(#{self_link_href}). Returned: #{_job}" }
+        end
+      end
 
       @job = job
       job_name = job['jcr:name']
@@ -90,23 +127,16 @@ module AdobeAnywhere
 
       logger.debug { "Processing Job. name: #{job_name} type: #{job_type} state: #{job_state} progress: #{job_progress}" }
 
-      job_links = job['links']
-      self_link_index = job_links.index { |link| link['rel'].downcase == 'self' }
-      self_link = job_links[self_link_index]
-      self_link_href = self_link['href']
-
-      job = aa.http_get(self_link_href) unless job.has_key?('ea:parameters')
-
       job_href_info = aa.production_job_href_parse(self_link_href)
-
       production_id = job_href_info['production_id']
+
+      logger.debug { "Getting Job's Production Information. Job Name: #{job_name} Production ID: #{production_id} Job URI: #{self_link_href}" }
       aa.production_get(production_id)
       @production = aa.parsed_response
 
       job_parameters = job['ea:parameters'] || { }
       job_result = job['ea:result']
 
-      media_paths = job_parameters['mediaPaths']
       case job_type
         #when 'com.adobe.ea.jobs.export'
         # production_href = job_parameters['destination']
@@ -114,13 +144,9 @@ module AdobeAnywhere
         # production_version = href_properties['production_version']
         #
         when 'com.adobe.ea.jobs.ingest'
+          media_paths = job_parameters['mediaPaths']
           @asset_media_information = mig(media_paths) if media_paths
 
-          #asset_urls = job['ea:metadata']['ea:retries'][0]['ea:result']['assetURLs']
-          #job_metadata = job['ea:metadata'] || { }
-          #job_retries = job_metadata['ea:retries'] || [ ]
-          #job_retry = job_retries.last || { }
-          #job_result = job_retry['ea:result'] || { }
           @assets = [ ]
           if job_result
             asset_urls = job_result['assetURLs']
@@ -175,7 +201,7 @@ module AdobeAnywhere
     # @param [String] value
     def eval_parameter(name, value)
       return value unless value.is_a?(String)
-      logger.debug { "Evaluating Parameter Value: #{value}"}
+      logger.debug { "Evaluating Parameter Name: #{name} Value: #{value}"}
       begin
         value = eval(value)
       rescue => e
@@ -183,7 +209,7 @@ module AdobeAnywhere
         logger.error { error_message }
         raise(e, error_message)
       end
-      logger.debug { "Parameter Value Evaluated: #{value}"}
+      logger.debug { "Parameter Name: #{name} Value Evaluated: #{value}"}
       value
     end # process_task_parameter_eval
 
@@ -232,13 +258,13 @@ module AdobeAnywhere
     def command_line_execute(command)
       command = command.shelljoin if command.is_a?(Array)
 
-      logger.debug { "Executing Command: #{command}" }
+      logger.debug { "Executing Command: '#{command}'" }
       begin
         stdout_str, stderr_str, status = Open3.capture3(command)
-        logger.error { "Error Executing #{command}. STDOUT #{stdout_str} STDERR: #{stderr_str}" } unless status.success?
+        logger.error { "Error Executing '#{command}'. \nSTDOUT: #{stdout_str} \nSTDERR: #{stderr_str}" } unless status.success?
         return { :stdout => stdout_str, :stderr => stderr_str, :status => status, :success => status.success? }
       rescue
-        logger.error { "Error Executing '#{command}'. Exception: #{$!} @ #{$@} STDOUT: '#{stdout_str}' STDERR: '#{stderr_str}' Status: #{status.inspect} " }
+        logger.error { "Error Executing '#{command}'. \nException: #{$!} @ #{$@} \nSTDOUT: '#{stdout_str}' \nSTDERR: '#{stderr_str}' \nStatus: #{status.inspect} " }
         return { :stdout => stdout_str, :stderr => stderr_str, :status => status, :success => false }
       end
     end # command_line_execute
@@ -247,7 +273,8 @@ module AdobeAnywhere
     # @param [Hash] substitutions
     def substitute_path(path, substitutions = path_substitutions)
       path = path.dup
-      substitutions.each { |search_for, replace_with| path = path.sub(search_for, replace_with) if path.start_with?(search_for) }
+      path = URI.decode(path).gsub('\\', '/')
+      substitutions.each { |search_for, replace_with| path = path.sub(search_for, replace_with) and break if path.start_with?(search_for) }
       path
     end # substitute_path
 

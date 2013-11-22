@@ -71,49 +71,23 @@ module AdobeAnywhere
       process_jobs
     end # run
 
-    # @param [Hash] job_details The output of a JobDetails call for a job
-    # @return [False|String] The URI to the job details
-    def get_self_link_href_from_job_details(job_details, options = { })
-      raise_exceptions = options.fetch(:raise_exceptions, true)
-      unless job_details.is_a?(Hash)
-        return false unless raise_exceptions
-        raise ArgumentError, "job_details argument is required to be a hash. job_details class name: #{job_details.class.name}. job_details: #{job_details}"
-      end
-
-      links = job_details['links']
-      unless links.is_a?(Array)
-        return false unless raise_exceptions
-        raise Argument, "job_details['links'] must be an array. job_details = #{job_details}"
-      end
-
-      self_link_index = links.index { |link| link['rel'].downcase == 'self' }
-      unless self_link_index
-        return false unless raise_exceptions
-        raise Argument, "job_details['links']['self'] not found. job_details = #{job_details}"
-      end
-
-      self_link = links[self_link_index]
-      unless self_link.is_a?(Hash)
-        return false unless raise_exceptions
-        raise Argument, "job_details['links']['self']['href'] not found. job_details = #{job_details}"
-      end
-
-      self_link['href']
-    end # get_self_link_href_from_job_details
-
     # @return [Hash]
     def get_latest_job_details_from_database(job)
       job_id = job['jcr:name']
       job_record = Jobs.find_by_id(job_id)
     end
 
-    # @param [Hash] job
+    # @param [Hash|String] job
     def get_latest_job_details_from_anywhere(job)
+      logger.debug { 'Getting Job Details from Adobe Anywhere.' }
       self_link_href = case job
-                         when Hash; job.include?('links') ? get_self_link_href_from_job_details(job) : false
+                         when Hash; job.include?('links') ? aa.get_self_link_href_from_job_details(job) : false
                          when String; job.include?('/') ? job : false
                        end
-      return false unless self_link_href
+      unless self_link_href
+        logger.warn { "Failed to get a valid URI from the job argument. #{job}" }
+        return false
+      end
       aa.http_get(self_link_href)
       aa.success? ? aa.parsed_response : false
     end
@@ -135,6 +109,8 @@ module AdobeAnywhere
 
     # @return [Hash] { details: [Hash], difference: [Hash] }
     def update_job_status(job_detail)
+      job_detail = job_detail.dup
+      logger.debug { 'Updating the Job Record in the Database.' }
       response = Jobs.save_changes(job_detail, :return_diff => true)
       response[:details] = job_detail
       response
@@ -142,12 +118,23 @@ module AdobeAnywhere
     alias :save_job_status :update_job_status
 
     def process_job(job)
+      logger.debug { "Processing job. #{job}" }
       job_details = get_latest_job_details_from_anywhere(job)
       job_update = update_job_status(job_details)
       job_diff = job_update[:difference]
-      if job_diff['ea:jobState'] and send_job_to_processor_on_state_change
-        logger.debug { "Job State Has Changed. #{job_diff}" }
-        job_processor.process_job(job)
+      job_before = job_update[:before]
+
+      old_job_state = job_before['ea:jobState']
+      new_job_state = job_diff['ea:jobState']
+      if new_job_state
+        logger.debug { "Job State Has Changed. ('#{old_job_state}' != '#{new_job_state}')" }
+        if send_job_to_processor_on_state_change
+          logger.debug { 'Sending the job to the job Processor.' }
+          job_processor.process_job(job_details)
+        end
+      else
+        new_job_state = job_details['ea:jobState']
+        logger.debug { "No Job State Change Detected. ('#{old_job_state}' == '#{new_job_state}')"}
       end
 
       #aa.production_get(href_info['production_id'])
@@ -167,21 +154,27 @@ module AdobeAnywhere
     end # get_job
 
     def get_jobs
-      aa.job_list
+      logger.debug { 'Getting a list of all jobs from the Adobe Anywhere server.' }
 
+      aa.job_list
       jobs = aa.parsed_response['jobs']
       stats = aa.parsed_response['stats']
 
+      page = 1
       if stats['totalResults'] > stats['count']
         loop do
           links          = aa.parsed_response['links']
           next_page_link = false
           links.each { |link| next_page_link = link and break if link['title'] == 'Next Page' }
           break unless next_page_link
+          page += 1
+          logger.debug { "Getting page #{page} of the job list. #{stats}" }
           aa.http_get(next_page_link['href'])
           jobs += aa.parsed_response['jobs']
+          stats = aa.parsed_response['stats']
         end
       end
+      logger.debug { "Found #{jobs ? jobs.length : 0} job(s). #{stats}" }
       jobs
     end # get_jobs
 
