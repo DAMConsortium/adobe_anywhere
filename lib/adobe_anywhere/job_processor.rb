@@ -263,7 +263,11 @@ module AdobeAnywhere
       logger.debug { "Executing Command: '#{command}'" }
       begin
         stdout_str, stderr_str, status = Open3.capture3(command)
-        logger.error { "Error Executing '#{command}'. \nSTDOUT: #{stdout_str} \nSTDERR: #{stderr_str}" } unless status.success?
+        unless status.success?
+          logger.error { "Error Executing '#{command}'. \nSTDOUT: #{stdout_str} \nSTDERR: #{stderr_str}" }
+        else
+          logger.debug { "Successfully Executed '#{command}'. \nSTDOUT: #{stdout_str} \nSTDERR: #{stderr_str}" }
+        end
         return { :stdout => stdout_str, :stderr => stderr_str, :status => status, :success => status.success? }
       rescue
         logger.error { "Error Executing '#{command}'. \nException: #{$!} @ #{$@} \nSTDOUT: '#{stdout_str}' \nSTDERR: '#{stderr_str}' \nStatus: #{status.inspect} " }
