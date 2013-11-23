@@ -26,6 +26,8 @@ module AdobeAnywhere
 
     attr_accessor :assets
 
+    attr_accessor :files
+
     attr_accessor :asset_media_information
 
     ####################################
@@ -47,7 +49,7 @@ module AdobeAnywhere
       @mig_executable_path = args[:mig_executable_path]
       if mig_executable_path
         if File.executable?(mig_executable_path)
-          logger.debug { "M.I.G. Executable Found. #{mig_executable_path}" }
+          logger.debug { "MIG. Executable Found. #{mig_executable_path}" }
         else
           logger.warn { "MIG DISABLED. FILE NOT #{File.exists?(mig_executable_path) ? 'EXECUTABLE' : 'FOUND'}. '#{mig_executable_path}'" }
           @mig_executable_path = false
@@ -74,9 +76,8 @@ module AdobeAnywhere
       return file_path.map { |p| mig(p) } if file_path.is_a?(Array)
       return { } unless mig_executable_path
 
-      local_file_path = substitute_path(file_path)
-      logger.debug { "Running MIG on path: LOCAL: '#{local_file_path}' REMOTE: '#{file_path}'" }
-      response = command_line_execute([ mig_executable_path, local_file_path])
+      logger.debug { "Running MIG on path '#{file_path}'" }
+      response = command_line_execute([ mig_executable_path, file_path])
       if response[:success]
         begin
           asset_media_info = JSON.parse(response[:stdout])
@@ -105,7 +106,7 @@ module AdobeAnywhere
     def process_job(job, params = {})
       logger.debug { "#{self.class.name}.#{__method__}(#{job})" }
 
-      @production = @assets = @asset_media_information = nil
+      @production = @assets = @asset_media_information = @files = nil
 
       self_link_href = aa.get_self_link_href_from_job_details(job)
 
@@ -145,7 +146,8 @@ module AdobeAnywhere
         #
         when 'com.adobe.ea.jobs.ingest'
           media_paths = job_parameters['mediaPaths']
-          @asset_media_information = mig(media_paths) if media_paths
+          local_file_paths = substitute_path(media_paths)
+          @asset_media_information = mig(local_file_paths) if local_file_paths
 
           @assets = [ ]
           if job_result
@@ -165,7 +167,7 @@ module AdobeAnywhere
           aa.production_asset_add(:job_name => "#{job_name}_ingest", :production_id => production_id, :media_paths => media_paths) if @ingest_asset_on_transfer
 
           if job_state == 'SUCCESSFUL'
-            files = job_parameters['files']
+            @files = job_parameters['files']
             file_paths = files.is_a?(Array) ? files.map { |f| f['dest' ] } : [ ]
             @asset_media_information = mig(file_paths)
           end
@@ -236,7 +238,7 @@ module AdobeAnywhere
 
     # @param [Hash] task
     def process_task_type_execute(task)
-      logger.debug { 'Processing Task of type: execute' }
+      logger.debug { 'Processing Task of Type: execute' }
       #cmd_line_ary = [ ]
 
       executable_path = search_hash(task, :executable_path, :executable, :exec)
@@ -272,10 +274,14 @@ module AdobeAnywhere
     # @param [String] path
     # @param [Hash] substitutions
     def substitute_path(path, substitutions = path_substitutions)
+      return path.map { |p| substitute_path(p, path_substitutions) } if path.is_a?(Array)
+
       path = path.dup
-      path = URI.decode(path).gsub('\\', '/')
-      substitutions.each { |search_for, replace_with| path = path.sub(search_for, replace_with) and break if path.start_with?(search_for) }
-      path
+      path_decoded = URI.decode(path).gsub('\\', '/')
+      substitutions.each { |search_for, replace_with| path_decoded = path_decoded.sub(search_for, replace_with) and break if path_decoded.start_with?(search_for) }
+      logger.debug { "Path Substitution: '#{path}' => '#{path_decoded}'" }
+
+      path_decoded
     end # substitute_path
 
   end # JobProcessor
