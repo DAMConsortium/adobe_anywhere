@@ -28,6 +28,10 @@ module AdobeAnywhere
 
     attr_accessor :files
 
+    attr_accessor :file_paths
+
+    attr_accessor :local_file_paths
+
     attr_accessor :asset_media_information
 
     ####################################
@@ -103,10 +107,18 @@ module AdobeAnywhere
       self_link_href
     end
 
+    def asset_media_information
+      @asset_media_information ||= mig(local_file_paths)
+    end
+
+    def local_file_paths
+      @local_file_paths ||= files.is_a?(Array) ? files.map { |file_path| substitute_path(file_path) } : [ ]
+    end
+
     def process_job(job, params = {})
       logger.debug { "#{self.class.name}.#{__method__}(#{job})" }
 
-      @production = @assets = @asset_media_information = @files = nil
+      @production = @assets = @asset_media_information = @files = @file_paths = @local_file_paths = nil
 
       self_link_href = aa.get_self_link_href_from_job_details(job)
 
@@ -139,15 +151,17 @@ module AdobeAnywhere
       job_result = job['ea:result']
 
       case job_type
-        #when 'com.adobe.ea.jobs.export'
-        # production_href = job_parameters['destination']
-        # production_id = href_properties['production_id']
-        # production_version = href_properties['production_version']
-        #
+        when 'com.adobe.ea.jobs.export'
+          @files = job_result['destinationFiles'] || [ ]
+          @file_paths = @files.dup
+          @local_file_paths = file_paths.map { |file_path| substitute_path(file_path) }
+          #@asset_media_information = mig(local_file_paths) if job_state == 'SUCCESSFUL'
+
         when 'com.adobe.ea.jobs.ingest'
-          media_paths = job_parameters['mediaPaths']
-          local_file_paths = substitute_path(media_paths)
-          @asset_media_information = mig(local_file_paths) if local_file_paths
+          @files = job_parameters['mediaPaths'] || [ ]
+          @file_paths = @files.dup
+          @local_file_paths = file_paths.map { |file_path| substitute_path(file_path) }
+          #@asset_media_information = mig(local_file_paths) if local_file_paths
 
           @assets = [ ]
           if job_result
@@ -164,16 +178,15 @@ module AdobeAnywhere
           end
         #  when 'com.adobe.ea.jobs.productionconversion'
         when 'com.adobe.ea.jobs.transfer'
-          aa.production_asset_add(:job_name => "#{job_name}_ingest", :production_id => production_id, :media_paths => media_paths) if @ingest_asset_on_transfer
+          @files = job_parameters['files'] || [ ]
+          @file_paths = files.is_a?(Array) ? files.map { |f| f['dest' ] } : [ ]
+          @local_file_paths = file_paths.map { |file_path| substitute_path(file_path) }
+          #@asset_media_information = mig(local_file_paths) if job_state == 'SUCCESSFUL'
 
-          if job_state == 'SUCCESSFUL'
-            @files = job_parameters['files']
-            file_paths = files.is_a?(Array) ? files.map { |f| f['dest' ] } : [ ]
-            @asset_media_information = mig(file_paths)
-          end
-          #abort("JOB STATE: #{job_state}")
+          aa.production_asset_add(:job_name => "#{job_name}_ingest", :production_id => production_id, :media_paths => file_paths) if @ingest_asset_on_transfer
+
       end
-      #abort("JOB TYPE: #{job_type}")
+
       if tasks
         tasks_by_job_type = tasks
         tasks_by_job_state = tasks_by_job_type[job_type] || { }
