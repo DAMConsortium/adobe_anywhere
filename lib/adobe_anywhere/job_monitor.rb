@@ -22,7 +22,9 @@ module AdobeAnywhere
     #attr_accessor :send_job_to_processor_on_state_change
     attr_accessor :job_processor
 
-    attr_accessor :only_send_job_to_processor_on_state_change
+    attr_accessor :job_processor_enabled
+
+    attr_accessor :send_progress_updates_to_processor
 
     class Jobs < AdobeAnywhere::Database::Helpers::Jobs; end
 
@@ -33,7 +35,8 @@ module AdobeAnywhere
       initialize_db(args)
       initialize_job_processor(args)
 
-      @only_send_job_to_processor_on_state_change = args.fetch(:only_send_job_to_processor_on_state_change, false)
+      @job_processor_enabled = args.fetch(:job_processor_enabled, true)
+      @send_progress_updates_to_processor = args.fetch(:@send_progress_updates_to_processor, false)
     end # initialize
 
     def initialize_logger(args = {})
@@ -133,13 +136,14 @@ module AdobeAnywhere
       else
         new_job_state = job_details['ea:jobState']
         logger.debug { "No Job State Change Detected. ('#{old_job_state}' == '#{new_job_state}') Difference: #{job_diff}"}
-        send_to_job_processor = !only_send_job_to_processor_on_state_change and !%w(SUCCESSFUL FAILED CANCELED).include?(new_job_state)
+        send_to_job_processor = (new_job_state == 'RUNNING' and send_progress_updates_to_processor)
       end
 
-      if send_to_job_processor
+      if send_to_job_processor and job_processor_enabled
         logger.debug { 'Sending the job to the job Processor.' }
         job_processor.process_job(job_details)
       end
+
     end
 
     def process_jobs(jobs = nil)
