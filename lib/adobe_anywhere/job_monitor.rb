@@ -134,11 +134,11 @@ module AdobeAnywhere
       new_job_state = job_diff['ea:jobState']
 
       if new_job_state
-        logger.info { "Job State Has Changed. ('#{old_job_state}' != '#{new_job_state}') Difference: #{job_diff}" }
+        logger.info { "Job State Has Changed. ('#{old_job_state}' != '#{new_job_state}')#{verbose ? " Difference: #{job_diff}" : ''}" }
         send_to_job_processor = true
       else
         new_job_state = job_details['ea:jobState']
-        logger.debug { "No Job State Change Detected. ('#{old_job_state}' == '#{new_job_state}') Difference: #{job_diff}"}
+        logger.debug { "No Job State Change Detected. ('#{old_job_state}' == '#{new_job_state}')#{verbose ? " Difference: #{job_diff}" : ''}" }
         send_to_job_processor = (new_job_state == 'RUNNING' and send_progress_updates_to_processor)
       end
 
