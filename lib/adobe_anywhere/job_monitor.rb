@@ -124,7 +124,7 @@ module AdobeAnywhere
     alias :save_job_status :update_job_status
 
     def process_job(job)
-      logger.info { "Processing job. #{job}" }
+      logger.info { "Processing job. #{verbose ? job : job['jcr:name']}" }
       job_details = get_latest_job_details_from_anywhere(job)
       job_update = update_job_status(job_details)
       job_diff = job_update[:difference]
