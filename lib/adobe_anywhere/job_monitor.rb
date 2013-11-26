@@ -22,7 +22,7 @@ module AdobeAnywhere
     #attr_accessor :send_job_to_processor_on_state_change
     attr_accessor :job_processor
 
-    attr_accessor :send_job_to_processor_on_state_change
+    attr_accessor :only_send_job_to_processor_on_state_change
 
     class Jobs < AdobeAnywhere::Database::Helpers::Jobs; end
 
@@ -33,7 +33,7 @@ module AdobeAnywhere
       initialize_db(args)
       initialize_job_processor(args)
 
-      @send_job_to_processor_on_state_change = args.fetch(:send_job_to_processor_on_state_change, true)
+      @only_send_job_to_processor_on_state_change = args.fetch(:only_send_job_to_processor_on_state_change, false)
     end # initialize
 
     def initialize_logger(args = {})
@@ -126,19 +126,20 @@ module AdobeAnywhere
 
       old_job_state = job_before['ea:jobState']
       new_job_state = job_diff['ea:jobState']
+
       if new_job_state
-        logger.debug { "Job State Has Changed. ('#{old_job_state}' != '#{new_job_state}')" }
-        if send_job_to_processor_on_state_change
-          logger.debug { 'Sending the job to the job Processor.' }
-          job_processor.process_job(job_details)
-        end
+        logger.debug { "Job State Has Changed. ('#{old_job_state}' != '#{new_job_state}') Difference: #{job_diff}" }
+        send_to_job_processor = true
       else
         new_job_state = job_details['ea:jobState']
-        logger.debug { "No Job State Change Detected. ('#{old_job_state}' == '#{new_job_state}')"}
+        logger.debug { "No Job State Change Detected. ('#{old_job_state}' == '#{new_job_state}') Difference: #{job_diff}"}
+        send_to_job_processor = !only_send_job_to_processor_on_state_change
       end
 
-      #aa.production_get(href_info['production_id'])
-      job_diff
+      if send_to_job_processor
+        logger.debug { 'Sending the job to the job Processor.' }
+        job_processor.process_job(job_details)
+      end
     end
 
     def process_jobs(jobs = nil)
