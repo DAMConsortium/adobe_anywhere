@@ -133,7 +133,7 @@ module AdobeAnywhere
       else
         new_job_state = job_details['ea:jobState']
         logger.debug { "No Job State Change Detected. ('#{old_job_state}' == '#{new_job_state}') Difference: #{job_diff}"}
-        send_to_job_processor = !only_send_job_to_processor_on_state_change
+        send_to_job_processor = !only_send_job_to_processor_on_state_change and !%w(SUCCESSFUL FAILED CANCELED).include?(new_job_state)
       end
 
       if send_to_job_processor
