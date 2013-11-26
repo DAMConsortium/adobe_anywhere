@@ -41,7 +41,7 @@ module AdobeAnywhere
 
         op.on('--log-level LEVEL', LOGGING_LEVELS.keys, "Logging level. Available Options: #{LOGGING_LEVELS.keys.join(', ')}",
               "\tdefault: #{LOGGING_LEVELS.invert[options[:log_level]]}") { |v| options[:log_level] = LOGGING_LEVELS[v] }
-
+        op.on('--no-verbose', 'Enables for more verbose debug output.') { |v| options[:verbose] = v }
         op.on('--[no-]options-file [FILEPATH]', 'An option file to use to set additional command line options.' ) do |v|
           options[:options_file_path] = v
         end

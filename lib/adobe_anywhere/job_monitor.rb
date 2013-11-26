@@ -26,6 +26,8 @@ module AdobeAnywhere
 
     attr_accessor :send_progress_updates_to_processor
 
+    attr_accessor :verbose
+
     class Jobs < AdobeAnywhere::Database::Helpers::Jobs; end
 
     def initialize(args = {})
@@ -35,6 +37,7 @@ module AdobeAnywhere
       initialize_db(args)
       initialize_job_processor(args)
 
+      @verbose = args.fetch(:verbose, false)
       @job_processor_enabled = args.fetch(:job_processor_enabled, true)
       @send_progress_updates_to_processor = args.fetch(:@send_progress_updates_to_processor, false)
     end # initialize
@@ -49,9 +52,9 @@ module AdobeAnywhere
     def initialize_adobe_anywhere(args = { })
       @aa = args[:adobe_anywhere] || begin
         _aa = AdobeAnywhere::API::Utilities.new(args)
-        _aa.http.log_request_body = true
-        _aa.http.log_response_body = true
-        _aa.http.log_pretty_print_body = true
+        _aa.http.log_request_body = args.fetch(:adobe_anywhere_log_request_body, verbose)
+        _aa.http.log_response_body = args.fetch(:adobe_anywhere_log_response_body, verbose)
+        _aa.http.log_pretty_print_body = args.fetch(:adobe_anywhere_log_pretty_print, verbose)
 
         _aa.login
 
@@ -121,7 +124,7 @@ module AdobeAnywhere
     alias :save_job_status :update_job_status
 
     def process_job(job)
-      logger.debug { "Processing job. #{job}" }
+      logger.info { "Processing job. #{job}" }
       job_details = get_latest_job_details_from_anywhere(job)
       job_update = update_job_status(job_details)
       job_diff = job_update[:difference]
@@ -131,7 +134,7 @@ module AdobeAnywhere
       new_job_state = job_diff['ea:jobState']
 
       if new_job_state
-        logger.debug { "Job State Has Changed. ('#{old_job_state}' != '#{new_job_state}') Difference: #{job_diff}" }
+        logger.info { "Job State Has Changed. ('#{old_job_state}' != '#{new_job_state}') Difference: #{job_diff}" }
         send_to_job_processor = true
       else
         new_job_state = job_details['ea:jobState']
