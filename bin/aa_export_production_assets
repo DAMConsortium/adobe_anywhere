@@ -70,7 +70,7 @@ production_assets.each do |production_id, assets|
     asset_id = asset['ea:assetId']
     filename = generate_random_file_name
     destination_path = "eamedia://#{File.join(mount_point, directory, filename)}"
-    puts "\tExporting To Destination Path: #{destination_path}"
+    puts "\tExporting Asset #{asset_id} To Destination Path: #{destination_path}"
     @aa.production_export_asset_with_name_lookup(production_id: production_id, asset_id: asset_id, exporter_preset_name: exporter_preset_name, destination_path: destination_path)
   end
 end
