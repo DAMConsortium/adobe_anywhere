@@ -13,13 +13,19 @@ options = AdobeAnywhere::API.default_options.merge({
    :log_to => STDERR,
    :log_level => Logger::WARN,
    :options_file_path => File.expand_path(File.basename($0, '.*'), '~/.options'),
+   production_name: 'test',
+   exporter_preset_name: 'ipad',
+   mount_point: 'export',
 })
 #options[:host_address] = '10.42.1.109'
 op = common_option_parser.new
-op.on('--production-name NAME') { |v| options[:production_name] = v}
-op.on('--exporter-preset-name NAME') { |v| options[:exporter_preset_name] = v }
-op.on('--mount-point NAME') { |v| options[:mount_point] = v }
-op.on('--directory NAME') { |v| options[:directory] = v }
+op.on('--production-name NAME', 'The name of the production to use the assets from.',
+      "\tdefault: #{options[:production_name]}") { |v| options[:production_name] = v}
+op.on('--exporter-preset-name NAME', 'The name of the exporter preset to use when exporting.',
+    "\tdefault: #{options[:exporter_preset_name]}") { |v| options[:exporter_preset_name] = v }
+op.on('--mount-point NAME', 'The name of the mount point to export to',
+    "\tdefault: #{options[:mount_point]}") { |v| options[:mount_point] = v }
+op.on('--directory NAME', 'The directory to export to.', '\tdefault: The current timestamp') { |v| options[:directory] = v }
 op.on('--adobe-anywhere-host-address HOSTADDRESS', 'The AdobeAnywhere server address.',
       "\tdefault: #{options[:host_address]}") { |v| options[:host_address] = v }
 op.on('--adobe-anywhere-host-port PORT', 'The port on the AdobeAnywhere server to connect to.',
@@ -57,7 +63,7 @@ production_assets.each do |production_id, assets|
     asset_id = asset['ea:assetId']
     filename = SecureRandom.urlsafe_base64(24)
     destination_path = "eamedia://#{File.join(mount_point, directory, filename)}"
-    puts "\t\t#{destination_path}"
+    puts "\t\tDestination Path: #{destination_path}"
     @aa.production_export_asset_with_name_lookup(production_id: production_id, asset_id: asset_id, exporter_preset_name: exporter_preset_name, destination_path: destination_path)
   end
 end
