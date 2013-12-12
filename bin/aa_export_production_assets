@@ -13,11 +13,11 @@ options = AdobeAnywhere::API.default_options.merge({
    :log_to => STDERR,
    :log_level => Logger::WARN,
    :options_file_path => File.expand_path(File.basename($0, '.*'), '~/.options'),
-   production_name: 'test',
-   exporter_preset_name: 'ipad',
-   mount_point: 'export',
+   :production_name => 'test',
+   :exporter_preset_name => 'ipad',
+   :mount_point => 'export',
 })
-#options[:host_address] = '10.42.1.109'
+options[:host_address] = '10.42.1.109'
 op = common_option_parser.new
 op.on('--production-name NAME', 'The name of the production to use the assets from.',
       "\tdefault: #{options[:production_name]}") { |v| options[:production_name] = v}
@@ -64,13 +64,13 @@ end
 
 production_assets = @aa.production_asset_list(production_name: production_name)
 production_assets.each do |production_id, assets|
-  puts "Production: (#{production_id}) #{assets}"
+  puts "Production: (#{production_id})"
   assets.each do |asset|
-    puts "\tAsset: #{asset}"
+    #puts "\tAsset: #{asset}"
     asset_id = asset['ea:assetId']
     filename = generate_random_file_name
     destination_path = "eamedia://#{File.join(mount_point, directory, filename)}"
-    puts "\t\tDestination Path: #{destination_path}"
+    puts "\tExporting To Destination Path: #{destination_path}"
     @aa.production_export_asset_with_name_lookup(production_id: production_id, asset_id: asset_id, exporter_preset_name: exporter_preset_name, destination_path: destination_path)
   end
 end
