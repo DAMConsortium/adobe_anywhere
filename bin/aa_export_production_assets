@@ -1,4 +1,4 @@
-#!/usr/bin/env
+#!/usr/bin/env ruby
 aa_base_dir = File.expand_path('../../', __FILE__)
 aa_lib_dir = File.join(aa_base_dir, 'lib')
 
@@ -14,7 +14,6 @@ options = AdobeAnywhere::API.default_options.merge({
    :log_level => Logger::WARN,
    :options_file_path => File.expand_path(File.basename($0, '.*'), '~/.options'),
 })
-
 #options[:host_address] = '10.42.1.109'
 op = common_option_parser.new
 op.on('--production-name NAME') { |v| options[:production_name] = v}
