@@ -5,7 +5,7 @@ aa_lib_dir = File.join(aa_base_dir, 'lib')
 $:.unshift(aa_lib_dir) unless $:.include?(aa_lib_dir)
 
 require 'pp'
-require 'securerandom'
+#require 'securerandom'
 
 require 'cli'
 require 'adobe_anywhere/api/utilities'
@@ -25,7 +25,7 @@ op.on('--exporter-preset-name NAME', 'The name of the exporter preset to use whe
     "\tdefault: #{options[:exporter_preset_name]}") { |v| options[:exporter_preset_name] = v }
 op.on('--mount-point NAME', 'The name of the mount point to export to',
     "\tdefault: #{options[:mount_point]}") { |v| options[:mount_point] = v }
-op.on('--directory NAME', 'The directory to export to.', '\tdefault: The current timestamp') { |v| options[:directory] = v }
+op.on('--directory NAME', 'The directory to export to.', "\tdefault: The current timestamp") { |v| options[:directory] = v }
 op.on('--adobe-anywhere-host-address HOSTADDRESS', 'The AdobeAnywhere server address.',
       "\tdefault: #{options[:host_address]}") { |v| options[:host_address] = v }
 op.on('--adobe-anywhere-host-port PORT', 'The port on the AdobeAnywhere server to connect to.',
@@ -55,13 +55,20 @@ mount_point ||= 'export'
 directory = options[:directory]
 directory ||= Time.now.to_i.to_s
 
+def generate_random_file_name(length = 24)
+    # SecureRandom.urlsafe_base64(length)
+    #o = [('a'..'z'), ('A'..'Z'), (0..1)].map { |i| i.to_a }.flatten
+    o = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    string = (0...length).map{ o[rand(o.length)] }.join
+end
+
 production_assets = @aa.production_asset_list(production_name: production_name)
 production_assets.each do |production_id, assets|
   puts "Production: (#{production_id}) #{assets}"
   assets.each do |asset|
     puts "\tAsset: #{asset}"
     asset_id = asset['ea:assetId']
-    filename = SecureRandom.urlsafe_base64(24)
+    filename = generate_random_file_name
     destination_path = "eamedia://#{File.join(mount_point, directory, filename)}"
     puts "\t\tDestination Path: #{destination_path}"
     @aa.production_export_asset_with_name_lookup(production_id: production_id, asset_id: asset_id, exporter_preset_name: exporter_preset_name, destination_path: destination_path)
