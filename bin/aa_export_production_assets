@@ -4,20 +4,21 @@ aa_lib_dir = File.join(aa_base_dir, 'lib')
 
 $:.unshift(aa_lib_dir) unless $:.include?(aa_lib_dir)
 
+require 'logger'
 require 'pp'
 #require 'securerandom'
 
 require 'cli'
 require 'adobe_anywhere/api/utilities'
 options = AdobeAnywhere::API.default_options.merge({
-   :log_to => STDERR,
-   :log_level => Logger::WARN,
+   :log_to => STDOUT,
+   :log_level => Logger::DEBUG,
    :options_file_path => File.expand_path(File.basename($0, '.*'), '~/.options'),
    :production_name => 'test',
    :exporter_preset_name => 'ipad',
    :mount_point => 'export',
 })
-options[:host_address] = '10.42.1.109'
+#options[:host_address] = '10.42.1.109'
 op = common_option_parser.new
 op.on('--production-name NAME', 'The name of the production to use the assets from.',
       "\tdefault: #{options[:production_name]}") { |v| options[:production_name] = v}
@@ -36,6 +37,12 @@ op.on('--adobe-anywhere-password PASSWORD', 'The password to login with. This wi
       "\tdefault: #{options[:password]}") { |v| options[:password] = v }
 add_common_options
 op.parse_common
+
+@logger = Logger.new(options[:log_to])
+def logger; @logger end
+
+logger.level = options[:log_level]
+options[:logger] = logger.dup
 
 @aa = AdobeAnywhere::API::Utilities.new(options)
 @aa.login
@@ -62,15 +69,24 @@ def generate_random_file_name(length = 24)
     string = (0...length).map{ o[rand(o.length)] }.join
 end
 
-production_assets = @aa.production_asset_list(production_name: production_name)
-production_assets.each do |production_id, assets|
-  puts "Production: (#{production_id})"
+logger.info { "Searching for Production: #{production_name}" }
+productions = @aa.production_asset_list(production_name: production_name)
+production_count = productions.length
+production_counter = 0
+logger.info { "Found #{production_count}." }
+
+productions.each do |production_id, assets|
+  production_counter += 1
+  logger.info { "Production #{production_counter} of #{production_count}: (#{production_id})" }
+  asset_count = assets.length
+  asset_counter = 0
   assets.each do |asset|
-    #puts "\tAsset: #{asset}"
+    asset_counter += 1
+    #puts "\tAsset #{asset_counter} of #{asset_count}: #{asset}"
     asset_id = asset['ea:assetId']
     filename = generate_random_file_name
     destination_path = "eamedia://#{File.join(mount_point, directory, filename)}"
-    puts "\tExporting Asset #{asset_id} To Destination Path: #{destination_path}"
+    logger.info { "\tExporting Asset #{asset_id} To Destination Path: #{destination_path}" }
     @aa.production_export_asset_with_name_lookup(production_id: production_id, asset_id: asset_id, exporter_preset_name: exporter_preset_name, destination_path: destination_path)
   end
 end
