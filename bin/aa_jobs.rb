@@ -1,4 +1,5 @@
-aa_base_dir = File.expand_path('../../../', __FILE__)
+#!/usr/bin/env ruby
+aa_base_dir = File.expand_path('../../', __FILE__)
 aa_lib_dir = File.join(aa_base_dir, 'lib')
 
 $:.unshift(aa_lib_dir) unless $:.include?(aa_lib_dir)
@@ -39,9 +40,8 @@ aa.login
 # @param [String] type (nil) Known types are SUCCESSFUL, WAITING, SCHEDULED, FAILED, RUNNING, CANCELED, CANCEL
 jobs_summary = { }
 total_jobs = 0
-%w(SUCCESSFUL, WAITING, SCHEDULED, FAILED, RUNNING, CANCELED, CANCEL).each do |job_type|
+%w(SUCCESSFUL WAITING SCHEDULED FAILED RUNNING CANCELED CANCEL).each do |job_type|
   aa.job_list(job_type)
-
   parsed_response = aa.parsed_response
   stats = parsed_response['stats']
   total_results = stats['totalResults']
