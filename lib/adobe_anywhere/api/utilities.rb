@@ -182,10 +182,15 @@ module AdobeAnywhere
         production_name = search_hash!(params, :production_name, :productionname)
         production_id = search_hash!(params, :production_id, :productionId, :productionid)
 
+        production_create_if_not_exists = search_hash(params, :production_create_if_not_exists)
+
         if production_name
           production_id = [*production_id]
           production_id += production_get_id_by_name(production_name)
-          response = production_id.map { |pid| params[:production_id] = pid; job_ingest_create(params) }
+          if production_id.empty? and production_create_if_not_exists
+            production_id << production_create(:production_name => production_name)
+          end
+          response = production_id.map { |prod_id| params[:production_id] = prod_id; job_ingest_create(params) }
           return response
         else
           params[:production_id] = production_id
