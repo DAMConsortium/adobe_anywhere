@@ -69,7 +69,7 @@ Usage: aa [options]
     ./aa --method-name production_create --method-arguments '{"name":"Test"}' --username admin --password admin
 
 ##### Add an asset to a production. If there are multiple productions with the same name then the asset is added to each production
-    ./aa --method-name production_asset_add --method-arguments '{ "production_name": "TEST", "media_paths": "eamedia://media/5.mov", "update_job_callback_uri": "http://0.0.0.0:0000/" }'
+    ./aa --method-name production_asset_add --method-arguments '{ "production_name": "TEST", "media_paths": "eamedia://media/5.mov", "update_job_callback_uri": "http://0.0.0.0:0000/",  "production_create_if_not_exists": true }'
 
 ##### Assign Group Membership to a production
     ./aa --method-name production_grant_group_access --method-arguments '{"production_name":"test", "group_id":"test"}'
