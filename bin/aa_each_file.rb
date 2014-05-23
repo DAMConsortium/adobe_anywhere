@@ -17,7 +17,7 @@ options[:asset_create_if_not_exists] = true
 options[:recursive] = true
 op = OptionParser.new
 op.banner = "#{File.basename($0)} [options] file_path1 [file_path2] [file_path3] [...]"
-op.on('--aa-executable-path PATH', 'The path to the Adobe Anywhere command line executable.', "\tdefault: #{options[:executable_path]}")
+op.on('--aa-executable-path PATH', 'The path to the Adobe Anywhere command line executable.', "\tdefault: #{options[:executable_path]}") { |v| options[:executable_path] = v }
 op.on('--mount-point-name NAME', 'The name of the media_paths mountpoint.', 'i.e: MEDIA') { |v| options[:mount_point_name] = v }
 op.on('--path-substitutions JSON', 'Any path substitutions to perform on the file paths.', %q('{"/Volumes":"", "/root":""}')) { |v| options[:path_substitutions] = JSON.parse(v) }
 op.on('--production-name NAME', 'A production name to add the assets to.') { |v| options[:production_name] = v }
