@@ -108,10 +108,10 @@ folder_paths.each do |folder_path|
   file_paths.each do |_file_path|
     file_path_counter += 1
     unless File.file?(_file_path)
-      logger.debug { "Skipping File Path #{file_path_counter} of #{file_path_count_total}. '#{file_path}'" }
+      logger.debug { "Skipping File Path #{file_path_counter} of #{file_path_count_total}. '#{_file_path}'" }
       next
     end
-    logger.debug { "Processing File Path #{file_path_counter} of #{file_path_count_total}. '#{file_path}'" }
+    logger.debug { "Processing File Path #{file_path_counter} of #{file_path_count_total}. '#{_file_path}'" }
 
     @file_path = _file_path
     @production_name = get_production_name_for_file_path(file_path)
